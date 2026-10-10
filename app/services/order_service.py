@@ -7,7 +7,7 @@ from app.config import settings
 from app.models.dhaba import Dhaba, MenuItem
 from app.models.order import Order, OrderItem, OrderStatus
 from app.models.stop import Stop
-from app.models.trip import Trip
+from app.models.trip import Trip, TripStatus
 from app.models.user import User
 from app.schemas.order import OrderCreate
 from app.services.eta_service import compute_eta, minutes_until
@@ -22,6 +22,7 @@ FORWARD_TRANSITIONS: dict[OrderStatus, OrderStatus] = {
     OrderStatus.READY: OrderStatus.PICKED_UP,
 }
 CANCELLABLE_STATUSES = (OrderStatus.PLACED, OrderStatus.ACCEPTED)
+NON_ORDERABLE_TRIP_STATUSES = (TripStatus.COMPLETED, TripStatus.CANCELLED)
 
 
 def validate_cutoff(trip: Trip, stop: Stop, dhaba: Dhaba, now: datetime | None = None) -> datetime:
@@ -47,6 +48,8 @@ def create_order(db: Session, passenger: User, payload: OrderCreate) -> Order:
     trip = db.get(Trip, payload.trip_id)
     if trip is None:
         raise NotFoundError(f"Trip {payload.trip_id} not found")
+    if trip.status in NON_ORDERABLE_TRIP_STATUSES:
+        raise BadRequestError(f"Cannot order on a trip that is already '{trip.status.value}'")
 
     stop = db.get(Stop, payload.stop_id)
     if stop is None:
