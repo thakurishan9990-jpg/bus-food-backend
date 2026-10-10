@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
@@ -8,7 +8,7 @@ from app.models.dhaba import Dhaba, MenuItem
 from app.models.order import Order
 from app.models.route import Route
 from app.models.stop import Stop
-from app.models.trip import Trip
+from app.models.trip import Trip, TripStatus
 from app.models.user import User, UserRole
 from app.schemas.dhaba import DhabaWithReviews, MenuItemRead
 from app.schemas.order import OrderCreate, OrderRead
@@ -48,6 +48,9 @@ def upcoming_stops(
     if trip is None:
         raise NotFoundError(f"Trip {trip_id} not found")
 
+    if trip.status == TripStatus.COMPLETED:
+        return []
+
     stops = (
         db.query(Stop)
         .filter(Stop.route_id == trip.route_id)
@@ -67,6 +70,11 @@ def upcoming_stops(
         if stop.sequence_order <= last_passed_sequence:
             continue
         eta = compute_eta(trip, stop)
+        # Drop stops already behind us, unless the bus is still within its halt
+        # window there (eta + halt_duration_minutes >= now) -- then keep it and
+        # let minutes_until_arrival go slightly negative.
+        if eta + timedelta(minutes=stop.halt_duration_minutes) < now:
+            continue
         stop_data = StopRead.model_validate(stop).model_dump()
         upcoming.append(
             UpcomingStop(**stop_data, eta=eta, minutes_until_arrival=round(minutes_until(eta, now)))
