@@ -13,6 +13,7 @@ class TripBase(BaseModel):
 
 class TripCreate(TripBase):
     route_id: int
+    status: TripStatus = TripStatus.SCHEDULED
 
 
 class TripUpdate(BaseModel):

@@ -5,10 +5,12 @@ from app.database import get_db
 from app.models.dhaba import Dhaba, MenuItem
 from app.models.route import Route
 from app.models.stop import Stop
+from app.models.trip import Trip
 from app.models.user import UserRole
 from app.schemas.dhaba import DhabaCreate, DhabaRead, DhabaUpdate, MenuItemCreate, MenuItemRead, MenuItemUpdate
 from app.schemas.route import RouteCreate, RouteRead, RouteUpdate
 from app.schemas.stop import StopCreate, StopRead, StopUpdate
+from app.schemas.trip import TripCreate, TripRead, TripUpdate
 from app.utils.errors import NotFoundError
 from app.utils.security import require_role
 
@@ -114,6 +116,39 @@ def delete_dhaba(dhaba_id: int, db: Session = Depends(get_db)) -> None:
     if dhaba is None:
         raise NotFoundError(f"Dhaba {dhaba_id} not found")
     db.delete(dhaba)
+    db.commit()
+
+
+# ---- Trips ----
+
+@router.post("/trips", response_model=TripRead, status_code=201)
+def create_trip(payload: TripCreate, db: Session = Depends(get_db)) -> Trip:
+    if db.get(Route, payload.route_id) is None:
+        raise NotFoundError(f"Route {payload.route_id} not found")
+    trip = Trip(**payload.model_dump())
+    db.add(trip)
+    db.commit()
+    db.refresh(trip)
+    return trip
+
+
+@router.patch("/trips/{trip_id}", response_model=TripRead)
+def update_trip(trip_id: int, payload: TripUpdate, db: Session = Depends(get_db)) -> Trip:
+    trip = db.get(Trip, trip_id)
+    if trip is None:
+        raise NotFoundError(f"Trip {trip_id} not found")
+    _apply_update(trip, payload)
+    db.commit()
+    db.refresh(trip)
+    return trip
+
+
+@router.delete("/trips/{trip_id}", status_code=204)
+def delete_trip(trip_id: int, db: Session = Depends(get_db)) -> None:
+    trip = db.get(Trip, trip_id)
+    if trip is None:
+        raise NotFoundError(f"Trip {trip_id} not found")
+    db.delete(trip)
     db.commit()
 
 
