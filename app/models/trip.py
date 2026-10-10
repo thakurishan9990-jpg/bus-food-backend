@@ -27,7 +27,8 @@ class Trip(Base):
         ForeignKey("stops.id", ondelete="SET NULL"), nullable=True
     )
     status: Mapped[TripStatus] = mapped_column(
-        Enum(TripStatus, name="trip_status"), default=TripStatus.SCHEDULED
+        Enum(TripStatus, name="trip_status", values_callable=lambda x: [e.value for e in x]),
+        default=TripStatus.SCHEDULED,
     )
 
     route: Mapped["Route"] = relationship(back_populates="trips")

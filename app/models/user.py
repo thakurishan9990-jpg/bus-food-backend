@@ -20,7 +20,10 @@ class User(Base):
     phone: Mapped[str] = mapped_column(String(20), unique=True, index=True)
     name: Mapped[str] = mapped_column(String(255))
     hashed_password: Mapped[str] = mapped_column(String(255))
-    role: Mapped[UserRole] = mapped_column(Enum(UserRole, name="user_role"), default=UserRole.PASSENGER)
+    role: Mapped[UserRole] = mapped_column(
+        Enum(UserRole, name="user_role", values_callable=lambda x: [e.value for e in x]),
+        default=UserRole.PASSENGER,
+    )
     dhaba_id: Mapped[int | None] = mapped_column(ForeignKey("dhabas.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

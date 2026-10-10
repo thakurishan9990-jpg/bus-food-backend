@@ -26,7 +26,10 @@ class Order(Base):
     stop_id: Mapped[int] = mapped_column(ForeignKey("stops.id", ondelete="CASCADE"))
     dhaba_id: Mapped[int] = mapped_column(ForeignKey("dhabas.id", ondelete="CASCADE"))
     seat_number: Mapped[str | None] = mapped_column(String(10), nullable=True)
-    status: Mapped[OrderStatus] = mapped_column(Enum(OrderStatus, name="order_status"), default=OrderStatus.PLACED)
+    status: Mapped[OrderStatus] = mapped_column(
+        Enum(OrderStatus, name="order_status", values_callable=lambda x: [e.value for e in x]),
+        default=OrderStatus.PLACED,
+    )
     total_amount: Mapped[Decimal] = mapped_column(Numeric(8, 2))
     expected_arrival_time: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
