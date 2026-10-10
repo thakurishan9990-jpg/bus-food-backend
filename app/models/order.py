@@ -40,6 +40,14 @@ class Order(Base):
     dhaba: Mapped["Dhaba"] = relationship()
     items: Mapped[list["OrderItem"]] = relationship(back_populates="order", cascade="all, delete-orphan")
 
+    @property
+    def dhaba_name(self) -> str:
+        return self.dhaba.name
+
+    @property
+    def stop_name(self) -> str:
+        return self.stop.name
+
 
 class OrderItem(Base):
     __tablename__ = "order_items"

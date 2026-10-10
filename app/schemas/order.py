@@ -35,7 +35,9 @@ class OrderRead(BaseModel):
     passenger_id: int
     trip_id: int
     stop_id: int
+    stop_name: str
     dhaba_id: int
+    dhaba_name: str
     seat_number: str | None
     status: OrderStatus
     total_amount: Decimal

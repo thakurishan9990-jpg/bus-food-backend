@@ -15,12 +15,19 @@ from app.schemas.order import OrderCreate, OrderRead
 from app.schemas.route import RouteRead
 from app.schemas.stop import StopRead, UpcomingStop
 from app.schemas.trip import TripRead
+from app.schemas.user import UserRead
 from app.services import order_service, places_service
 from app.services.eta_service import compute_eta, minutes_until
 from app.utils.errors import ForbiddenError, NotFoundError
 from app.utils.security import get_current_user, require_role
 
 router = APIRouter(tags=["passengers"])
+
+
+@router.get("/me", response_model=UserRead)
+def get_me(current_user: User = Depends(get_current_user)) -> User:
+    """Return the current authenticated user, so a client can restore a session from a stored token."""
+    return current_user
 
 
 @router.get("/routes", response_model=list[RouteRead])
@@ -37,6 +44,16 @@ def list_trips_for_route(
     if db.get(Route, route_id) is None:
         raise NotFoundError(f"Route {route_id} not found")
     return db.query(Trip).filter(Trip.route_id == route_id).all()
+
+
+@router.get("/routes/{route_id}/stops", response_model=list[StopRead])
+def list_stops_for_route(
+    route_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)
+) -> list[Stop]:
+    """List every stop on a route, in sequence order (for drawing a full route map)."""
+    if db.get(Route, route_id) is None:
+        raise NotFoundError(f"Route {route_id} not found")
+    return db.query(Stop).filter(Stop.route_id == route_id).order_by(Stop.sequence_order).all()
 
 
 @router.get("/trips/{trip_id}/upcoming-stops", response_model=list[UpcomingStop])
