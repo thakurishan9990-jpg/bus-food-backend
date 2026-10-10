@@ -41,6 +41,7 @@ class MenuItemBase(BaseModel):
     name: str
     price: Decimal = Field(gt=0)
     is_veg: bool
+    is_available: bool = True
 
 
 class MenuItemCreate(MenuItemBase):
@@ -51,6 +52,7 @@ class MenuItemUpdate(BaseModel):
     name: str | None = None
     price: Decimal | None = Field(default=None, gt=0)
     is_veg: bool | None = None
+    is_available: bool | None = None
 
 
 class MenuItemRead(MenuItemBase):

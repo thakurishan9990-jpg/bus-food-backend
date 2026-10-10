@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from sqlalchemy import Boolean, ForeignKey, Integer, Numeric, String
+from sqlalchemy import Boolean, ForeignKey, Integer, Numeric, String, true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -31,5 +31,6 @@ class MenuItem(Base):
     name: Mapped[str] = mapped_column(String(255))
     price: Mapped[Decimal] = mapped_column(Numeric(8, 2))
     is_veg: Mapped[bool] = mapped_column(Boolean)
+    is_available: Mapped[bool] = mapped_column(Boolean, default=True, server_default=true())
 
     dhaba: Mapped["Dhaba"] = relationship(back_populates="menu_items")
