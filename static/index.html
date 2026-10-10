@@ -1,13 +1,773 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Bus Food Pre-Ordering API</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DhabaGo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#14362E;
+  --brand:#0A8A68;
+  --brand-dk:#077256;
+  --ink-2:#1E4A3E;
+  --ink-3:#2C6353;
+  --paper:#F4F8F6;
+  --card:#FFFFFF;
+  --line:#DEE9E4;
+  --line-2:#BBDCCF;
+  --muted:#5E7A70;
+  --teal:#3C4F49;
+  --teal-dk:#2A3A35;
+  --teal-soft:#E7EDEA;
+  --amber:#C0820F;
+  --amber-soft:#FBF1DC;
+  --red:#C04A3A;
+  --red-soft:#FBECE8;
+  --radius:16px;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:16.5px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:'Outfit',system-ui,sans-serif;margin:0;letter-spacing:-.025em;line-height:1.2}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font:inherit;color:inherit}
+
+.shell{max-width:1260px;margin:0 auto;padding:0 22px 90px}
+
+/* ---------- boot ---------- */
+.boot{position:fixed;inset:0;background:var(--brand);z-index:200;display:grid;place-items:center;animation:bootout .6s cubic-bezier(.76,0,.24,1) 1s forwards}
+@keyframes bootout{to{opacity:0;visibility:hidden;transform:translateY(-100%)}}
+.boot .mk{display:flex;align-items:center;gap:14px;color:#fff;font-family:'Outfit';font-size:34px;font-weight:700;letter-spacing:-.03em;animation:bootin .7s cubic-bezier(.22,1.3,.36,1)}
+@keyframes bootin{from{opacity:0;transform:scale(.82)}to{opacity:1;transform:none}}
+.boot .bus{font-size:40px;animation:drive 1.1s cubic-bezier(.22,1,.36,1)}
+@keyframes drive{from{transform:translateX(-70px);opacity:0}to{transform:none;opacity:1}}
+
+/* ---------- top bar ---------- */
+.topbar{position:sticky;top:0;z-index:40;background:var(--brand);color:#fff;padding-top:env(safe-area-inset-top,0px)}
+.topbar-in{max-width:1260px;margin:0 auto;padding:17px 22px;display:flex;align-items:center}
+.logo{display:flex;align-items:center;gap:11px;font-family:'Outfit';font-weight:700;font-size:23px;letter-spacing:-.03em;animation:slideIn .7s cubic-bezier(.22,1,.36,1) 1.1s backwards}
+@keyframes slideIn{from{opacity:0;transform:translateX(-22px)}to{opacity:1;transform:none}}
+.logo-mark{width:36px;height:36px;border-radius:11px;background:#fff;color:var(--brand);display:grid;place-items:center;font-size:18px;transition:transform .4s cubic-bezier(.22,1.5,.36,1)}
+.logo:hover .logo-mark{transform:rotate(-12deg) scale(1.1)}
+.logo span.go{color:var(--teal)}
+.mode{font-size:13px;font-weight:600;color:#C6F0E2;padding:6px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.18);white-space:nowrap}
+.mode.live{color:#C7D4CF;border-color:rgba(60,79,73,.55);background:rgba(255,255,255,.15)}
+@media(max-width:560px){.mode{display:none}}
+
+/* ---------- nav ---------- */
+.nav{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.nav-in{max-width:1260px;margin:0 auto;padding:0 14px;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.nav-in::-webkit-scrollbar{display:none}
+.nav button{
+  padding:15px 17px;font-size:15px;font-weight:500;color:var(--muted);
+  border-bottom:2.5px solid transparent;white-space:nowrap;position:relative;
+  transition:color .25s ease,border-color .25s ease,transform .25s cubic-bezier(.22,1.4,.36,1);
+}
+.nav button:hover{color:var(--ink);transform:translateY(-2px)}
+.nav button.on{color:var(--teal);border-bottom-color:var(--teal);font-weight:600}
+
+/* ---------- screens ---------- */
+.screen{display:none;padding-top:30px}
+.screen.on{display:block}
+.page-title{font-size:31px;font-weight:600;margin-bottom:5px}
+.page-sub{color:var(--muted);font-size:15.5px;margin-bottom:26px}
+
+/* reveal on scroll + on screen entry */
+.rv{opacity:0;transform:translateY(26px) scale(.985);transition:opacity .62s cubic-bezier(.22,1,.36,1),transform .62s cubic-bezier(.22,1,.36,1)}
+.rv.in{opacity:1;transform:none}
+
+/* ---------- cards ---------- */
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:20px 22px;margin-bottom:15px;
+  transition:transform .32s cubic-bezier(.22,1,.36,1),border-color .32s,box-shadow .32s;
+}
+.card.tap:hover{transform:translateY(-5px);border-color:var(--line-2);box-shadow:0 16px 38px rgba(20,54,46,.1)}
+
+.band{background:var(--brand);color:#fff;border-radius:var(--radius);padding:26px;margin-bottom:24px;position:relative;overflow:hidden}
+.band::after{content:'';position:absolute;top:-60%;right:-10%;width:280px;height:280px;border-radius:50%;background:rgba(255,255,255,.15);animation:drift 9s ease-in-out infinite}
+@keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(-26px,26px)}}
+.band h3{font-size:27px;font-weight:600;margin-bottom:7px;position:relative}
+.band .meta{color:#C6F0E2;font-size:15px;position:relative}
+.alert-pill{
+  display:inline-flex;align-items:center;gap:9px;margin-top:16px;position:relative;
+  background:rgba(192,74,58,.2);border:1px solid rgba(192,74,58,.5);
+  color:#F3CDC5;padding:9px 16px;border-radius:999px;font-size:14px;font-weight:500;
+}
+.alert-pill .ping{width:8px;height:8px;border-radius:50%;background:#E87A64;animation:blip 1.4s infinite}
+@keyframes blip{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.75)}}
+
+/* ---------- stop rail ---------- */
+.rail{position:relative;padding-left:28px}
+.rail::before{content:'';position:absolute;left:7px;top:12px;bottom:12px;width:2px;background:var(--line)}
+.stop{position:relative;padding:16px 0;border-bottom:1px solid var(--line);display:flex;gap:18px;align-items:baseline}
+.stop:last-child{border-bottom:none}
+.stop::before{content:'';position:absolute;left:-25px;top:24px;width:13px;height:13px;border-radius:50%;background:var(--card);border:2.5px solid var(--line-2);transition:all .3s}
+.stop:hover::before{border-color:var(--teal);transform:scale(1.25)}
+.stop.now::before{background:var(--teal);border-color:var(--teal);animation:halo 2.2s infinite}
+@keyframes halo{0%{box-shadow:0 0 0 0 rgba(60,79,73,.5)}70%{box-shadow:0 0 0 14px rgba(60,79,73,0)}100%{box-shadow:0 0 0 0 rgba(60,79,73,0)}}
+.stop .t{font-family:'Outfit';font-size:19px;font-weight:600;min-width:70px}
+.stop .nm{font-weight:600;font-size:17.5px}
+.stop .sub{color:var(--muted);font-size:14px;margin-top:3px}
+.tag{display:inline-block;margin-top:9px;background:var(--teal-soft);color:var(--teal-dk);padding:5px 13px;border-radius:999px;font-size:13px;font-weight:600}
+.tag.warn{background:var(--amber-soft);color:var(--amber)}
+
+/* ---------- grids ---------- */
+.grid{display:grid;grid-template-columns:1fr;gap:15px}
+@media(min-width:760px){.grid{grid-template-columns:1fr 1fr}}
+.dhaba-top{display:flex;justify-content:space-between;align-items:flex-start;gap:13px}
+.dhaba-name{font-family:'Outfit';font-size:20px;font-weight:600}
+.stars{color:var(--amber);font-size:14px;font-weight:600;white-space:nowrap}
+.quote{margin:15px 0;padding:14px 16px;background:var(--paper);border-left:3px solid var(--teal);font-size:15px;color:var(--ink-2);font-style:italic;border-radius:0 10px 10px 0}
+.rowmeta{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);margin-bottom:15px}
+
+/* ---------- buttons + ripple ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  background:var(--teal);color:#fff;padding:13px 22px;border-radius:11px;
+  font-weight:600;font-size:15px;position:relative;overflow:hidden;
+  transition:background .22s,transform .14s cubic-bezier(.22,1.5,.36,1),box-shadow .25s;
+}
+.btn:hover{background:var(--teal-dk);transform:translateY(-2px);box-shadow:0 10px 24px rgba(60,79,73,.3)}
+.btn:active{transform:translateY(0) scale(.97)}
+.btn.full{width:100%}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-2);box-shadow:none}
+.btn.ghost:hover{background:var(--card);border-color:var(--ink-3);box-shadow:0 8px 20px rgba(20,54,46,.08)}
+.btn.dark{background:var(--ink)}
+.btn.dark:hover{background:var(--ink-2);box-shadow:0 10px 24px rgba(20,54,46,.28)}
+.rip{position:absolute;border-radius:50%;background:rgba(255,255,255,.45);transform:scale(0);animation:rip .62s cubic-bezier(.22,1,.36,1);pointer-events:none}
+.btn.ghost .rip{background:rgba(60,79,73,.22)}
+@keyframes rip{to{transform:scale(2.6);opacity:0}}
+
+/* ---------- menu ---------- */
+.countdown{background:var(--brand);color:#fff;border-radius:var(--radius);padding:21px 24px;margin-bottom:22px;display:flex;flex-wrap:wrap;gap:22px;align-items:center}
+.cd-block .lab{font-size:13px;color:#C6F0E2}
+.cd-block .val{font-family:'Outfit';font-size:24px;font-weight:600}
+.cd-block .val.live{color:var(--teal)}
+.cd-bar{flex:1 1 180px;height:7px;background:rgba(255,255,255,.14);border-radius:999px;overflow:hidden;min-width:140px}
+.cd-fill{height:100%;background:var(--teal);width:0;animation:fill 2.6s cubic-bezier(.22,1,.36,1) .3s forwards}
+@keyframes fill{to{width:68%}}
+
+.item{display:flex;align-items:center;gap:15px;padding:17px 0;border-bottom:1px solid var(--line);transition:padding-left .25s}
+.item:last-child{border-bottom:none}
+.item:hover{padding-left:7px}
+.veg{width:16px;height:16px;border:2px solid var(--teal);border-radius:4px;display:grid;place-items:center;flex-shrink:0}
+.veg::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--teal)}
+.veg.non{border-color:var(--red)}.veg.non::after{background:var(--red)}
+.item-body{flex:1;min-width:0}
+.item-name{font-weight:600;font-size:16px}
+.item-desc{font-size:14px;color:var(--muted)}
+.price{font-family:'Outfit';font-weight:600;font-size:17px;white-space:nowrap}
+.stepper{display:flex;align-items:center;gap:4px;background:var(--paper);border-radius:10px;padding:4px}
+.stepper button{width:33px;height:33px;border-radius:8px;font-size:19px;font-weight:600;color:var(--teal-dk);transition:background .15s,transform .14s cubic-bezier(.22,1.6,.36,1)}
+.stepper button:hover{background:var(--teal-soft)}
+.stepper button:active{transform:scale(.84)}
+.qty{min-width:24px;text-align:center;font-weight:600;font-size:16px}
+.qty.bump{animation:bump .34s cubic-bezier(.22,1.7,.36,1)}
+@keyframes bump{50%{transform:scale(1.5);color:var(--teal)}}
+
+.cartbar{position:sticky;bottom:14px;margin-top:22px;background:var(--brand);color:#fff;border-radius:var(--radius);padding:18px 22px;display:flex;align-items:center;gap:18px;box-shadow:0 16px 40px rgba(20,54,46,.3)}
+.cartbar .l{font-size:14px;color:#C6F0E2}
+.cartbar .n{font-family:'Outfit';font-size:21px;font-weight:600}
+
+/* ---------- timeline ---------- */
+.tl{position:relative;padding-left:44px}
+.tl::before{content:'';position:absolute;left:16px;top:16px;bottom:20px;width:2.5px;background:var(--line)}
+.tl-prog{position:absolute;left:16px;top:16px;width:2.5px;background:var(--teal);height:0;transition:height 1.5s cubic-bezier(.22,1,.36,1)}
+.tl-prog.go{height:52%}
+.tlrow{position:relative;padding:0 0 28px}
+.tlrow:last-child{padding-bottom:0}
+.tldot{position:absolute;left:-44px;top:0;width:35px;height:35px;border-radius:50%;background:var(--card);border:2.5px solid var(--line-2);color:var(--muted);display:grid;place-items:center;font-size:15px;font-weight:600}
+.tlrow.done .tldot{background:var(--teal);border-color:var(--teal);color:#fff}
+.tlrow.active .tldot{background:var(--amber);border-color:var(--amber);color:#fff;animation:halo2 2.2s infinite}
+@keyframes halo2{0%{box-shadow:0 0 0 0 rgba(192,130,15,.5)}70%{box-shadow:0 0 0 16px rgba(192,130,15,0)}100%{box-shadow:0 0 0 0 rgba(192,130,15,0)}}
+.tl-label{font-weight:600;font-size:16.5px}
+.tl-time{font-size:14px;color:var(--muted)}
+
+/* ---------- kitchen ---------- */
+.kcard{border-left:4px solid var(--teal)}
+.kcard.urgent{border-left-color:var(--red);background:var(--red-soft)}
+.kid{font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.05em}
+.klist{background:var(--paper);border-radius:10px;padding:14px 16px;margin:13px 0;font-size:15px;line-height:1.95}
+.keta{font-size:14px;font-weight:600;color:var(--teal-dk);margin-bottom:13px}
+.keta.urgent{color:var(--red)}
+
+/* ---------- ops ---------- */
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:24px}
+@media(min-width:760px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;transition:transform .3s cubic-bezier(.22,1,.36,1),box-shadow .3s}
+.kpi:hover{transform:translateY(-5px);box-shadow:0 14px 32px rgba(20,54,46,.1)}
+.kpi .lab{font-size:13px;color:var(--muted);margin-bottom:7px}
+.kpi .num{font-family:'Outfit';font-size:34px;font-weight:600;letter-spacing:-.035em}
+.kpi .num span{font-size:16px;color:var(--muted);font-weight:500}
+
+.chart{display:flex;align-items:flex-end;gap:13px;height:170px;padding:0 4px;margin:20px 0 9px}
+.bar{flex:1;background:var(--teal-soft);border-radius:7px 7px 0 0;height:0;transition:height 1.1s cubic-bezier(.22,1,.36,1)}
+.bar.go{height:var(--h)}
+.bar:hover{background:var(--teal)}
+.chart-x{display:flex;gap:13px;padding:0 4px}
+.chart-x span{flex:1;text-align:center;font-size:13px;color:var(--muted)}
+
+.tbl{width:100%;border-collapse:collapse;font-size:15px}
+.tbl th{text-align:left;padding:14px 16px;background:var(--brand);color:#fff;font-weight:500;font-size:14px}
+.tbl td{padding:14px 16px;border-bottom:1px solid var(--line)}
+.tbl tbody tr{transition:background .2s,transform .2s}
+.tbl tbody tr:hover{background:var(--teal-soft)}
+.pill{padding:5px 12px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--teal-soft);color:var(--teal-dk)}
+.pill.late{background:var(--red-soft);color:var(--red)}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--card)}
+.flag{background:var(--amber-soft);border:1px solid #EBD5A8;border-radius:var(--radius);padding:18px 20px;margin-top:20px}
+.flag .h{font-weight:600;color:var(--amber);margin-bottom:5px;font-size:16px}
+.flag .b{font-size:15px;color:var(--ink-2)}
+
+/* ---------- search ---------- */
+.search{width:100%;padding:15px 18px;border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:20px;transition:border-color .25s,box-shadow .25s,transform .25s}
+.search:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px rgba(60,79,73,.13);transform:translateY(-2px)}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px}
+.chip{padding:9px 17px;border-radius:999px;border:1px solid var(--line-2);background:var(--card);font-size:14px;font-weight:500;color:var(--muted);transition:all .25s cubic-bezier(.22,1.4,.36,1)}
+.chip:hover{border-color:var(--teal);color:var(--teal-dk);transform:translateY(-2px)}
+.chip.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.sec-label{font-size:14px;font-weight:600;color:var(--muted);margin-bottom:11px}
+
+/* ---------- forms ---------- */
+.field{margin-bottom:19px}
+.field label{display:block;font-size:14px;font-weight:600;margin-bottom:8px}
+.field input,.field select,.field textarea{width:100%;padding:13px 16px;border:1px solid var(--line-2);border-radius:11px;background:var(--card);transition:border-color .25s,box-shadow .25s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px rgba(60,79,73,.13)}
+.field .err{font-size:14px;color:var(--red);margin-top:7px;display:none}
+.field.bad input,.field.bad textarea{border-color:var(--red);animation:shake .4s}
+.field.bad .err{display:block}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+
+.steps{display:flex;gap:7px;margin-bottom:28px}
+.stepseg{flex:1;text-align:center}
+.stepseg .bar{height:5px;background:var(--line);border-radius:999px;margin-bottom:9px;transition:background .4s}
+.stepseg.done .bar,.stepseg.on .bar{background:var(--teal)}
+.stepseg .lab{font-size:13px;color:var(--muted)}
+.stepseg.on .lab{color:var(--teal-dk);font-weight:600}
+
+.sum{background:var(--paper);border-radius:12px;padding:18px 20px;margin-bottom:19px}
+.sumrow{display:flex;justify-content:space-between;font-size:15px;padding:6px 0}
+.sumrow.tot{border-top:1px solid var(--line-2);margin-top:9px;padding-top:12px;font-weight:600;font-family:'Outfit';font-size:19px}
+
+/* ---------- notes / profile ---------- */
+.note{display:flex;gap:15px;padding:17px 20px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;transition:transform .3s cubic-bezier(.22,1,.36,1),box-shadow .3s}
+.note:hover{transform:translateX(7px);box-shadow:0 12px 28px rgba(20,54,46,.08)}
+.note .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:19px;flex-shrink:0;background:var(--teal-soft)}
+.note .ic.amber{background:var(--amber-soft)}
+.note .tm{font-size:13px;color:var(--muted)}
+.note .ti{font-weight:600;font-size:15.5px;margin:2px 0}
+.note .bd{font-size:14.5px;color:var(--muted)}
+.prof{background:var(--brand);color:#fff;border-radius:var(--radius);padding:26px;margin-bottom:22px;display:flex;align-items:center;gap:18px}
+.avatar{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.22);display:grid;place-items:center;font-family:'Outfit';font-size:23px;font-weight:600;transition:transform .4s cubic-bezier(.22,1.5,.36,1)}
+.prof:hover .avatar{transform:scale(1.08) rotate(-6deg)}
+.prof .nm{font-family:'Outfit';font-size:22px;font-weight:600}
+.prof .ph{color:#C6F0E2;font-size:15px}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;gap:18px}
+.sw{width:50px;height:28px;border-radius:999px;background:var(--line-2);position:relative;transition:background .3s;flex-shrink:0;cursor:pointer}
+.sw::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .32s cubic-bezier(.22,1.5,.36,1)}
+.sw.on{background:var(--teal)}
+.sw.on::after{transform:translateX(22px)}
+
+/* ---------- modal ---------- */
+.veil{position:fixed;inset:0;background:rgba(20,54,46,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:22px;z-index:90}
+.veil.on{display:flex;animation:fade .25s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.modal{background:var(--card);border-radius:20px;padding:28px;width:100%;max-width:450px;max-height:86vh;overflow-y:auto;animation:pop .4s cubic-bezier(.22,1.35,.36,1)}
+@keyframes pop{from{opacity:0;transform:translateY(32px) scale(.94)}to{opacity:1;transform:none}}
+.modal h3{font-size:22px;font-weight:600;margin-bottom:7px}
+.modal .lead{color:var(--muted);font-size:15px;margin-bottom:22px}
+.tick{width:64px;height:64px;border-radius:50%;background:var(--teal);color:#fff;display:grid;place-items:center;font-size:31px;margin:0 auto 18px;animation:pop2 .55s cubic-bezier(.22,1.6,.36,1)}
+@keyframes pop2{from{transform:scale(0) rotate(-45deg)}to{transform:none}}
+.rate{display:flex;gap:9px;justify-content:center;font-size:36px;margin:16px 0 22px}
+.rate span{color:var(--line-2);cursor:pointer;transition:transform .18s cubic-bezier(.22,1.6,.36,1),color .18s}
+.rate span:hover{transform:scale(1.28) rotate(-8deg)}
+.rate span.on{color:var(--amber)}
+
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,160%);background:var(--ink);color:#fff;padding:14px 24px;border-radius:999px;font-size:15px;font-weight:500;z-index:95;transition:transform .45s cubic-bezier(.22,1.4,.36,1);box-shadow:0 14px 34px rgba(20,54,46,.35)}
+.toast.on{transform:translate(-50%,0)}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
+</style>
+
+<style id="themepick">
+.tbtn{position:fixed;right:18px;bottom:18px;z-index:120;width:52px;height:52px;border-radius:50%;
+background:var(--brand);color:#fff;display:grid;place-items:center;font-size:22px;cursor:pointer;
+box-shadow:0 10px 26px rgba(0,0,0,.25);transition:transform .25s cubic-bezier(.22,1.5,.36,1)}
+.tbtn:hover{transform:scale(1.1) rotate(12deg)}
+.tray{position:fixed;right:18px;bottom:82px;z-index:120;background:#fff;border-radius:16px;
+padding:14px;box-shadow:0 18px 46px rgba(0,0,0,.22);display:none;width:224px}
+.tray.on{display:block;animation:pop .3s cubic-bezier(.22,1.3,.36,1)}
+.tray h4{font-size:13px;font-weight:600;margin-bottom:10px;color:#333;font-family:'Plus Jakarta Sans',sans-serif}
+.sw2{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer;transition:background .2s}
+.sw2:hover{background:#F2F2F5}
+.sw2 .dots{display:flex;gap:3px}
+.sw2 .dots i{width:16px;height:16px;border-radius:50%;display:block}
+.sw2 span{font-size:13px;font-weight:500;color:#333;font-family:'Plus Jakarta Sans',sans-serif}
+</style>
 </head>
-<body style="font-family: sans-serif; max-width: 640px; margin: 4rem auto; line-height: 1.6;">
-  <h1>Bus Food Pre-Ordering API</h1>
-  <p>Pre-order food from dhabas at upcoming bus stops. This is a backend-only project —
-  there's no frontend here yet.</p>
-  <p><a href="/docs">Open the Swagger UI (/docs)</a> to try every endpoint.</p>
+<body>
+
+<div class="boot"><div class="mk"><span class="bus">🚌</span>DhabaGo</div></div>
+
+<div class="topbar"><div class="topbar-in">
+  <div class="logo"><div class="logo-mark">🚌</div>Dhaba<span class="go">Go</span></div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:11px">
+    <span class="mode" id="mode">Demo data</span>
+    <button class="btn" id="connect" style="padding:9px 16px;font-size:14px">Connect API</button>
+  </div>
+</div></div>
+
+<nav class="nav"><div class="nav-in" id="nav">
+  <button class="on" data-s="trip">Trip</button>
+  <button data-s="dhabas">Dhabas</button>
+  <button data-s="menu">Menu</button>
+  <button data-s="checkout">Checkout</button>
+  <button data-s="order">Order</button>
+  <button data-s="search">Search</button>
+  <button data-s="notify">Alerts</button>
+  <button data-s="profile">Profile</button>
+  <button data-s="kitchen">Kitchen</button>
+  <button data-s="ops">Operations</button>
+</div></nav>
+
+<main class="shell">
+
+<section class="screen on" id="trip">
+  <div class="band rv">
+    <h3>Delhi → Dehradun</h3>
+    <div class="meta">Uttarakhand Roadways · departed 08:00 · 5 stops ahead</div>
+    <div class="alert-pill"><span class="ping"></span> Running 15 min late — order cut-offs shifted</div>
+  </div>
+  <h2 class="page-title rv">Stops ahead</h2>
+  <p class="page-sub rv">Pre-order at any stop before the kitchen cut-off.</p>
+  <div class="card rv"><div class="rail">
+    <div class="stop now"><div class="t">10:54</div><div><div class="nm">Meerut</div><div class="sub">20 min halt · 6 dhabas open</div><span class="tag">Next stop · order by 10:38</span></div></div>
+    <div class="stop"><div class="t">11:24</div><div><div class="nm">Khatauli</div><div class="sub">10 min halt · 3 dhabas open</div><span class="tag warn">Short halt</span></div></div>
+    <div class="stop"><div class="t">11:54</div><div><div class="nm">Muzaffarnagar</div><div class="sub">10 min halt · 5 dhabas open</div></div></div>
+    <div class="stop"><div class="t">12:34</div><div><div class="nm">Roorkee</div><div class="sub">10 min halt · 8 dhabas open</div></div></div>
+    <div class="stop"><div class="t">12:54</div><div><div class="nm">Chhutmalpur</div><div class="sub">5 min halt · 2 dhabas open</div><span class="tag warn">Pickup only</span></div></div>
+  </div></div>
+</section>
+
+<section class="screen" id="dhabas">
+  <h2 class="page-title rv">Dhabas at Meerut</h2>
+  <p class="page-sub rv">Bus arrives 10:54 · 20 minute halt</p>
+  <div class="grid">
+    <div class="card tap rv"><div class="dhaba-top"><div class="dhaba-name">Punjabi Rasoi</div><div class="stars">★ 4.6 · 287</div></div><div class="quote">Reviewers keep coming back for the butter chicken and say the wait is worth it.</div><div class="rowmeta"><span>Prep 18 min</span><span>Avg bill ₹250</span></div><button class="btn full" data-go="menu">View menu</button></div>
+    <div class="card tap rv"><div class="dhaba-top"><div class="dhaba-name">South Spice</div><div class="stars">★ 4.3 · 192</div></div><div class="quote">Crisp dosas and quick service are the two things reviewers mention most.</div><div class="rowmeta"><span>Prep 12 min</span><span>Avg bill ₹180</span></div><button class="btn full" data-go="menu">View menu</button></div>
+    <div class="card tap rv"><div class="dhaba-top"><div class="dhaba-name">Momo King</div><div class="stars">★ 4.5 · 156</div></div><div class="quote">Freshly steamed momos; several reviews call out the chutney.</div><div class="rowmeta"><span>Prep 10 min</span><span>Avg bill ₹150</span></div><button class="btn full" data-go="menu">View menu</button></div>
+    <div class="card tap rv"><div class="dhaba-top"><div class="dhaba-name">Sharma Vaishno Dhaba</div><div class="stars">★ 4.1 · 98</div></div><div class="quote">Pure veg thali gets steady praise for portion size and value.</div><div class="rowmeta"><span>Prep 15 min</span><span>Avg bill ₹140</span></div><button class="btn full" data-go="menu">View menu</button></div>
+  </div>
+</section>
+
+<section class="screen" id="menu">
+  <h2 class="page-title rv">Punjabi Rasoi</h2>
+  <p class="page-sub rv">Meerut stop · ★ 4.6 · North Indian</p>
+  <div class="countdown rv">
+    <div class="cd-block"><div class="lab">Order closes in</div><div class="val live" id="clock">07:42</div></div>
+    <div class="cd-block"><div class="lab">Food ready by</div><div class="val">10:48</div></div>
+    <div class="cd-block"><div class="lab">Bus arrives</div><div class="val">10:54</div></div>
+    <div class="cd-bar"><div class="cd-fill"></div></div>
+  </div>
+  <div class="card rv" id="menulist">
+    <div class="item"><div class="veg non"></div><div class="item-body"><div class="item-name">Butter chicken</div><div class="item-desc">Half plate · boneless</div></div><div class="price">₹280</div><div class="stepper"><button data-d="-1">−</button><span class="qty">1</span><button data-d="1">+</button></div></div>
+    <div class="item"><div class="veg"></div><div class="item-body"><div class="item-name">Garlic naan</div><div class="item-desc">Tandoor fresh</div></div><div class="price">₹60</div><div class="stepper"><button data-d="-1">−</button><span class="qty">2</span><button data-d="1">+</button></div></div>
+    <div class="item"><div class="veg"></div><div class="item-body"><div class="item-name">Paneer tikka masala</div><div class="item-desc">Full plate</div></div><div class="price">₹320</div><div class="stepper"><button data-d="-1">−</button><span class="qty">0</span><button data-d="1">+</button></div></div>
+    <div class="item"><div class="veg"></div><div class="item-body"><div class="item-name">Dal makhani</div><div class="item-desc">Slow cooked overnight</div></div><div class="price">₹190</div><div class="stepper"><button data-d="-1">−</button><span class="qty">0</span><button data-d="1">+</button></div></div>
+    <div class="item"><div class="veg"></div><div class="item-body"><div class="item-name">Masala chai</div><div class="item-desc">Kulhad · 150 ml</div></div><div class="price">₹40</div><div class="stepper"><button data-d="-1">−</button><span class="qty">1</span><button data-d="1">+</button></div></div>
+  </div>
+  <div class="cartbar"><div><div class="l" id="cartcount">4 items</div><div class="n" id="carttotal">₹440</div></div><button class="btn" style="margin-left:auto" data-go="checkout">Review order</button></div>
+</section>
+
+<section class="screen" id="checkout">
+  <h2 class="page-title rv">Checkout</h2>
+  <p class="page-sub rv">Punjabi Rasoi · Meerut stop</p>
+  <div class="steps rv">
+    <div class="stepseg done"><div class="bar"></div><div class="lab">Cart</div></div>
+    <div class="stepseg on"><div class="bar"></div><div class="lab">Details</div></div>
+    <div class="stepseg"><div class="bar"></div><div class="lab">Payment</div></div>
+    <div class="stepseg"><div class="bar"></div><div class="lab">Done</div></div>
+  </div>
+  <div class="grid">
+    <div class="card rv">
+      <div class="field" id="f-seat"><label for="seat">Seat number</label><input id="seat" placeholder="A-12"><div class="err">Enter your seat number</div></div>
+      <div class="field"><label for="pay">Payment method</label><select id="pay"><option>UPI</option><option>Card</option><option>Cash at counter</option></select></div>
+      <div class="field"><label for="note">Notes for the kitchen</label><textarea id="note" rows="3" placeholder="Less spicy, pack separately"></textarea></div>
+    </div>
+    <div class="card rv">
+      <div class="sum">
+        <div class="sumrow"><span>Butter chicken × 1</span><span>₹280</span></div>
+        <div class="sumrow"><span>Garlic naan × 2</span><span>₹120</span></div>
+        <div class="sumrow"><span>Masala chai × 1</span><span>₹40</span></div>
+        <div class="sumrow"><span>Platform fee</span><span>₹0</span></div>
+        <div class="sumrow tot"><span>Total</span><span>₹440</span></div>
+      </div>
+      <button class="btn full" id="place">Place order</button>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="order">
+  <div class="band rv"><h3>Order #ORD-78923</h3><div class="meta">Punjabi Rasoi · Meerut · ₹440 · seat A-12</div></div>
+  <div class="card rv"><div class="tl"><div class="tl-prog" id="tlprog"></div>
+    <div class="tlrow done"><div class="tldot">✓</div><div class="tl-label">Order placed</div><div class="tl-time">10:31</div></div>
+    <div class="tlrow done"><div class="tldot">✓</div><div class="tl-label">Accepted by kitchen</div><div class="tl-time">10:32</div></div>
+    <div class="tlrow active"><div class="tldot">●</div><div class="tl-label">Being prepared</div><div class="tl-time">started 10:35 · 13 min left</div></div>
+    <div class="tlrow"><div class="tldot">3</div><div class="tl-label">Ready for pickup</div><div class="tl-time">expected 10:48</div></div>
+    <div class="tlrow"><div class="tldot">4</div><div class="tl-label">Bus arrives</div><div class="tl-time">expected 10:54</div></div>
+  </div></div>
+  <div class="grid"><button class="btn ghost rv" id="rate-open">Rate a past order</button><button class="btn ghost rv" id="cancel">Cancel order</button></div>
+</section>
+
+<section class="screen" id="search">
+  <h2 class="page-title rv">Find a dhaba</h2>
+  <p class="page-sub rv">Across every stop on your route</p>
+  <input class="search rv" id="q" placeholder="Search dishes or dhabas">
+  <div class="sec-label rv">Filters</div>
+  <div class="chips rv" id="chips">
+    <button class="chip on">★ 4.0+</button><button class="chip">Pure veg</button>
+    <button class="chip">Under ₹200</button><button class="chip">Ready in 15 min</button>
+    <button class="chip">North Indian</button><button class="chip">South Indian</button>
+    <button class="chip">Chinese</button><button class="chip">Chai and snacks</button>
+  </div>
+  <div class="sec-label" id="rescount">4 results</div>
+  <div class="grid" id="results">
+    <div class="card tap rv" data-n="punjabi rasoi butter chicken north indian"><div class="dhaba-top"><div class="dhaba-name">Punjabi Rasoi</div><div class="stars">★ 4.6</div></div><div class="rowmeta" style="margin-top:13px"><span>Meerut · 18 min</span><span>₹250</span></div><button class="btn full" data-go="menu">View menu</button></div>
+    <div class="card tap rv" data-n="south spice dosa idli south indian"><div class="dhaba-top"><div class="dhaba-name">South Spice</div><div class="stars">★ 4.3</div></div><div class="rowmeta" style="margin-top:13px"><span>Meerut · 12 min</span><span>₹180</span></div><button class="btn full" data-go="menu">View menu</button></div>
+    <div class="card tap rv" data-n="momo king chinese momos noodles"><div class="dhaba-top"><div class="dhaba-name">Momo King</div><div class="stars">★ 4.5</div></div><div class="rowmeta" style="margin-top:13px"><span>Khatauli · 10 min</span><span>₹150</span></div><button class="btn full" data-go="menu">View menu</button></div>
+    <div class="card tap rv" data-n="highway chai corner tea snacks samosa"><div class="dhaba-top"><div class="dhaba-name">Highway Chai Corner</div><div class="stars">★ 4.2</div></div><div class="rowmeta" style="margin-top:13px"><span>Roorkee · 6 min</span><span>₹80</span></div><button class="btn full" data-go="menu">View menu</button></div>
+  </div>
+</section>
+
+<section class="screen" id="notify">
+  <h2 class="page-title rv">Alerts</h2>
+  <p class="page-sub rv">Order and trip updates</p>
+  <div class="note rv"><div class="ic">🍳</div><div><div class="tm">2 min ago</div><div class="ti">Kitchen started your order</div><div class="bd">Punjabi Rasoi is preparing order #ORD-78923.</div></div></div>
+  <div class="note rv"><div class="ic amber">⏱</div><div><div class="tm">14 min ago</div><div class="ti">Bus running 15 min late</div><div class="bd">Your Meerut arrival moved from 10:39 to 10:54. Cut-off updated.</div></div></div>
+  <div class="note rv"><div class="ic">✓</div><div><div class="tm">22 min ago</div><div class="ti">Order confirmed</div><div class="bd">#ORD-78923 accepted. Ready by 10:48.</div></div></div>
+  <div class="note rv"><div class="ic amber">★</div><div><div class="tm">Yesterday</div><div class="ti">Rate South Spice</div><div class="bd">How was order #ORD-78841?</div></div></div>
+</section>
+
+<section class="screen" id="profile">
+  <div class="prof rv"><div class="avatar">AK</div><div><div class="nm">Amit Kumar</div><div class="ph">+91 98765 43210 · passenger</div></div></div>
+  <div class="grid">
+    <div class="card rv">
+      <h3 style="font-size:18px;font-weight:600;margin-bottom:15px">Preferences</h3>
+      <div class="toggle-row" style="padding:11px 0;border-bottom:1px solid var(--line)"><div><div style="font-weight:600;font-size:15.5px">Push notifications</div><div style="font-size:14px;color:var(--muted)">Order and delay updates</div></div><div class="sw on"></div></div>
+      <div class="toggle-row" style="padding:11px 0;border-bottom:1px solid var(--line)"><div><div style="font-weight:600;font-size:15.5px">SMS alerts</div><div style="font-size:14px;color:var(--muted)">When food is ready</div></div><div class="sw on"></div></div>
+      <div class="toggle-row" style="padding:11px 0"><div><div style="font-weight:600;font-size:15.5px">Veg only by default</div><div style="font-size:14px;color:var(--muted)">Filter menus automatically</div></div><div class="sw"></div></div>
+    </div>
+    <div class="card rv">
+      <h3 style="font-size:18px;font-weight:600;margin-bottom:15px">Past orders</h3>
+      <div class="item"><div class="item-body"><div class="item-name">#ORD-78841 · South Spice</div><div class="item-desc">9 Oct · ₹320 · picked up</div></div><button class="btn ghost" id="rate-open-2" style="padding:9px 16px">Rate</button></div>
+      <div class="item"><div class="item-body"><div class="item-name">#ORD-78702 · Momo King</div><div class="item-desc">3 Oct · ₹210 · picked up</div></div><span class="stars">★ 5</span></div>
+      <button class="btn ghost full" style="margin-top:15px">Sign out</button>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="kitchen">
+  <h2 class="page-title rv">Kitchen desk</h2>
+  <p class="page-sub rv">Punjabi Rasoi · 3 open orders · sorted by bus arrival</p>
+  <div class="grid">
+    <div class="card kcard urgent rv"><div class="kid">#ORD-78923</div><div style="font-weight:600;font-size:17px;margin-top:5px">Amit Kumar · seat A-12</div><div class="klist">1 × Butter chicken<br>2 × Garlic naan<br>1 × Masala chai</div><div class="keta urgent">Bus 10:54 · ready by 10:48 · 13 min left</div><button class="btn full dark">Mark ready</button></div>
+    <div class="card kcard rv"><div class="kid">#ORD-78924</div><div style="font-weight:600;font-size:17px;margin-top:5px">Priya Singh · seat B-08</div><div class="klist">1 × Paneer tikka masala<br>1 × Plain naan<br>2 × Masala chai</div><div class="keta">Bus 10:54 · ready by 10:48 · preparing</div><button class="btn full">Start preparing</button></div>
+    <div class="card kcard rv"><div class="kid">#ORD-78925</div><div style="font-weight:600;font-size:17px;margin-top:5px">Rajesh Patel · seat C-04</div><div class="klist">1 × Dal makhani<br>3 × Tandoori roti</div><div class="keta">Bus 11:24 · ready by 11:18 · new</div><button class="btn full">Accept order</button></div>
+  </div>
+</section>
+
+<section class="screen" id="ops">
+  <h2 class="page-title rv">Operations</h2>
+  <p class="page-sub rv">Live across all routes · updated just now</p>
+  <div class="kpis">
+    <div class="kpi rv"><div class="lab">Active trips</div><div class="num" data-count="12">0</div></div>
+    <div class="kpi rv"><div class="lab">Open orders</div><div class="num" data-count="47">0</div></div>
+    <div class="kpi rv"><div class="lab">Dhabas online</div><div class="num"><span class="cnum" data-count="28">0</span><span>/34</span></div></div>
+    <div class="kpi rv"><div class="lab">Avg prep time</div><div class="num"><span class="cnum" data-count="14">0</span><span> min</span></div></div>
+  </div>
+  <div class="card rv">
+    <h3 style="font-size:18px;font-weight:600">Orders by stop · today</h3>
+    <div class="chart">
+      <div class="bar" style="--h:48%"></div><div class="bar" style="--h:88%"></div>
+      <div class="bar" style="--h:36%"></div><div class="bar" style="--h:66%"></div><div class="bar" style="--h:22%"></div>
+    </div>
+    <div class="chart-x"><span>Meerut</span><span>Khatauli</span><span>Muzaff.</span><span>Roorkee</span><span>Chhutm.</span></div>
+  </div>
+  <h3 class="rv" style="font-size:18px;font-weight:600;margin:24px 0 13px">Live trips</h3>
+  <div class="tblwrap rv"><table class="tbl">
+    <thead><tr><th>Trip</th><th>Route</th><th>Status</th><th>Orders</th></tr></thead>
+    <tbody>
+      <tr><td>DL-234</td><td>Delhi → Dehradun</td><td><span class="pill late">+15 min</span></td><td>8</td></tr>
+      <tr><td>DL-567</td><td>Delhi → Mussoorie</td><td><span class="pill ok">On time</span></td><td>12</td></tr>
+      <tr><td>GZ-890</td><td>Ghaziabad → Rishikesh</td><td><span class="pill ok">On time</span></td><td>6</td></tr>
+      <tr><td>DL-118</td><td>Delhi → Haridwar</td><td><span class="pill late">+8 min</span></td><td>11</td></tr>
+    </tbody>
+  </table></div>
+  <div class="flag rv"><div class="h">Worth a look · Punjabi Rasoi</div><div class="b">8 orders queued against an 18 min prep time. Two buses arrive within the same 20 minute window.</div></div>
+</section>
+
+</main>
+
+<div class="veil" id="veil-done"><div class="modal" style="text-align:center">
+  <div class="tick">✓</div><h3>Order placed</h3><p class="lead">#ORD-78923 · Punjabi Rasoi</p>
+  <div class="sum" style="text-align:left">
+    <div class="sumrow"><span>Ready by</span><span>10:48</span></div>
+    <div class="sumrow"><span>Bus arrives</span><span>10:54</span></div>
+    <div class="sumrow"><span>Seat</span><span id="seatout">A-12</span></div>
+    <div class="sumrow tot"><span>Paid</span><span>₹440</span></div>
+  </div>
+  <button class="btn full" id="track">Track order</button>
+</div></div>
+
+<div class="veil" id="veil-rate"><div class="modal">
+  <h3>Rate your order</h3><p class="lead">South Spice · #ORD-78841</p>
+  <div class="rate" id="rate"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
+  <div class="field" id="f-rev"><label for="rev">What stood out?</label><textarea id="rev" rows="3" placeholder="Dosa was crisp, service was quick"></textarea><div class="err">Write a line before submitting</div></div>
+  <div style="display:flex;gap:11px"><button class="btn ghost" style="flex:1" data-close>Cancel</button><button class="btn" style="flex:1" id="sendrev">Submit</button></div>
+</div></div>
+
+<div class="toast" id="toast">Saved</div>
+
+<script>
+var API={
+  base:'',
+  token:null,
+  live:false,
+  async call(path,opts){
+    opts=opts||{};
+    var h={'Content-Type':'application/json'};
+    if(this.token)h['Authorization']='Bearer '+this.token;
+    var r=await fetch(this.base+path,{method:opts.method||'GET',headers:h,body:opts.body?JSON.stringify(opts.body):undefined});
+    if(!r.ok)throw new Error(path+' → '+r.status);
+    return r.json();
+  },
+  async login(phone,password){
+    var body=new URLSearchParams({username:phone,password:password});
+    var r=await fetch(this.base+'/auth/login',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body});
+    if(!r.ok)throw new Error('login '+r.status);
+    var d=await r.json(); this.token=d.access_token; return d;
+  }
+};
+
+function setMode(on){
+  API.live=on;
+  var d=document.getElementById('mode');
+  d.textContent=on?'Live API':'Demo data';
+  d.className='mode'+(on?' live':'');
+}
+
+async function goLive(){
+  var step='login';
+  try{
+    await API.login('9876543210','password123');
+    setMode(true);
+    step='routes'; var routes=await API.call('/routes');
+    if(!routes||!routes.length)throw new Error('empty');
+    step='trips'; var trips=await API.call('/routes/'+routes[0].id+'/trips');
+    if(!trips||!trips.length)throw new Error('empty');
+    step='stops'; await paintTrip(trips[0].id,routes[0]);
+    toast('Connected — live data');
+  }catch(e){
+    if(step==='login'){ setMode(false); toast('Login failed: '+e.message); }
+    else { toast('Connected, but '+step+' failed: '+e.message); }
+  }
+}
+
+function hhmm(iso){
+  var d=new Date(iso);
+  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
+
+async function paintTrip(tripId,route){
+  var stops=await API.call('/trips/'+tripId+'/upcoming-stops');
+  var trip=(stops&&stops.trip)||{};
+  if(stops&&stops.stops)stops=stops.stops;
+  var band=document.querySelector('#trip .band');
+  band.querySelector('h3').textContent=(route&&route.name)||(trip.route&&trip.route.name)||'Trip '+tripId;
+  band.querySelector('.meta').textContent=(trip.operator||'')+(trip.departure_time?' · departed '+hhmm(trip.departure_time):'')+' · '+stops.length+' stops ahead';
+  var pill=band.querySelector('.alert-pill');
+  if(trip.current_delay_minutes>0){
+    pill.style.display='';
+    pill.innerHTML='<span class="ping"></span> Running '+trip.current_delay_minutes+' min late — order cut-offs shifted';
+  }else{pill.style.display='none'}
+  var rail=document.querySelector('#trip .rail');
+  rail.innerHTML=stops.map(function(s,i){
+    return '<div class="stop'+(i===0?' now':'')+'"><div class="t">'+hhmm(s.expected_arrival_time||s.eta||s.arrival_time)+'</div>'+
+      '<div><div class="nm">'+(s.name||(s.stop&&s.stop.name)||'Stop')+'</div><div class="sub">'+(s.halt_duration_minutes||0)+' min halt</div>'+
+      (i===0?'<span class="tag">Next stop</span>':'')+'</div></div>';
+  }).join('');
+}
+
+var io=new IntersectionObserver(function(es){
+  es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in')}});
+},{threshold:.1,rootMargin:'0px 0px -40px 0px'});
+function watch(root){
+  (root||document).querySelectorAll('.rv').forEach(function(el,i){
+    el.style.transitionDelay=(i%7)*55+'ms'; io.observe(el);
+  });
+}
+setTimeout(function(){watch()},1200);
+
+function playScreen(el){
+  el.querySelectorAll('.rv').forEach(function(x){x.classList.remove('in')});
+  requestAnimationFrame(function(){
+    el.querySelectorAll('.rv').forEach(function(x){
+      var r=x.getBoundingClientRect();
+      if(r.top<window.innerHeight+40){x.classList.add('in')}
+    });
+  });
+  var p=el.querySelector('.tl-prog'); if(p){p.classList.remove('go');requestAnimationFrame(function(){p.classList.add('go')})}
+  el.querySelectorAll('.bar').forEach(function(b,i){
+    b.classList.remove('go'); b.style.transitionDelay=i*90+'ms';
+    setTimeout(function(){b.classList.add('go')},60);
+  });
+  el.querySelectorAll('[data-count]').forEach(function(n){
+    var end=parseInt(n.dataset.count,10),t0=null;
+    function step(ts){ if(!t0)t0=ts; var p=Math.min((ts-t0)/900,1);
+      n.textContent=Math.round(end*(1-Math.pow(1-p,3))); if(p<1)requestAnimationFrame(step)}
+    requestAnimationFrame(step);
+  });
+}
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('on')});
+  document.querySelectorAll('#nav button').forEach(function(b){b.classList.toggle('on',b.dataset.s===id)});
+  var el=document.getElementById(id); if(!el)return;
+  el.classList.add('on'); window.scrollTo({top:0,behavior:'smooth'}); playScreen(el);
+}
+document.getElementById('nav').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(b)show(b.dataset.s);
+});
+document.addEventListener('click',function(e){
+  var g=e.target.closest('[data-go]'); if(g)show(g.dataset.go);
+});
+
+document.addEventListener('click',function(e){
+  var b=e.target.closest('.btn'); if(!b)return;
+  var r=b.getBoundingClientRect(),d=Math.max(r.width,r.height),s=document.createElement('span');
+  s.className='rip'; s.style.width=s.style.height=d+'px';
+  s.style.left=(e.clientX-r.left-d/2)+'px'; s.style.top=(e.clientY-r.top-d/2)+'px';
+  b.appendChild(s); setTimeout(function(){s.remove()},620);
+});
+
+document.getElementById('connect').addEventListener('click',goLive);
+setTimeout(goLive,900);
+
+var PRICES=[280,60,320,190,40];
+function recalc(){
+  var n=0,t=0;
+  document.querySelectorAll('#menulist .qty').forEach(function(q,i){
+    var v=parseInt(q.textContent,10)||0; n+=v; t+=v*PRICES[i];
+  });
+  document.getElementById('cartcount').textContent=n+(n===1?' item':' items');
+  document.getElementById('carttotal').textContent='₹'+t.toLocaleString('en-IN');
+}
+document.getElementById('menulist').addEventListener('click',function(e){
+  var b=e.target.closest('button[data-d]'); if(!b)return;
+  var q=b.parentElement.querySelector('.qty');
+  q.textContent=Math.max(0,(parseInt(q.textContent,10)||0)+parseInt(b.dataset.d,10));
+  q.classList.remove('bump'); void q.offsetWidth; q.classList.add('bump'); recalc();
+});
+recalc();
+
+var left=462;
+setInterval(function(){
+  if(left<=0)return; left--;
+  var m=Math.floor(left/60),s=left%60;
+  document.getElementById('clock').textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
+},1000);
+
+document.getElementById('chips').addEventListener('click',function(e){
+  var c=e.target.closest('.chip'); if(c)c.classList.toggle('on');
+});
+document.getElementById('q').addEventListener('input',function(){
+  var v=this.value.trim().toLowerCase(),n=0;
+  document.querySelectorAll('#results .card').forEach(function(c){
+    var hit=!v||(c.dataset.n||'').indexOf(v)>-1;
+    c.style.display=hit?'':'none'; if(hit)n++;
+  });
+  document.getElementById('rescount').textContent=n+(n===1?' result':' results');
+});
+
+document.querySelectorAll('.sw').forEach(function(s){
+  s.addEventListener('click',function(){s.classList.toggle('on')});
+});
+
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(function(){t.classList.remove('on')},2300)}
+function openV(id){document.getElementById(id).classList.add('on')}
+function closeV(){document.querySelectorAll('.veil').forEach(function(v){v.classList.remove('on')})}
+document.querySelectorAll('.veil').forEach(function(v){v.addEventListener('click',function(e){if(e.target===v)closeV()})});
+document.addEventListener('click',function(e){if(e.target.closest('[data-close]'))closeV()});
+
+var seat=document.getElementById('seat');
+seat.addEventListener('input',function(){document.getElementById('f-seat').classList.remove('bad')});
+document.getElementById('place').addEventListener('click',function(){
+  if(!seat.value.trim()){document.getElementById('f-seat').classList.add('bad');seat.focus();return}
+  document.getElementById('seatout').textContent=seat.value.trim(); openV('veil-done');
+});
+document.getElementById('track').addEventListener('click',function(){closeV();show('order')});
+document.getElementById('cancel').addEventListener('click',function(){toast('Cancellation requested')});
+
+function openRate(){openV('veil-rate')}
+document.getElementById('rate-open').addEventListener('click',openRate);
+document.getElementById('rate-open-2').addEventListener('click',openRate);
+var stars=document.querySelectorAll('#rate span');
+stars.forEach(function(s,i){s.addEventListener('click',function(){
+  stars.forEach(function(x,j){x.classList.toggle('on',j<=i)});
+})});
+var rev=document.getElementById('rev');
+rev.addEventListener('input',function(){document.getElementById('f-rev').classList.remove('bad')});
+document.getElementById('sendrev').addEventListener('click',function(){
+  if(!rev.value.trim()){document.getElementById('f-rev').classList.add('bad');rev.focus();return}
+  closeV(); toast('Thanks for the review');
+});
+</script>
+
+<div class="tbtn" id="tbtn">&#127912;</div>
+<div class="tray" id="tray"><h4>Pick a look</h4><div id="swatches"></div></div>
+
+<script>
+var THEMES={
+ 'Emerald + azure':{brand:'#0A8A68',bdk:'#077256',accent:'#1E95DB',adk:'#1579B5',asoft:'#E1F0FB',ink:'#14362E',ink2:'#1E4A3E',paper:'#F4F8F6',line:'#DEE9E4',line2:'#BBDCCF',muted:'#5E7A70',onDark:'#C6F0E2'},
+ 'Midnight + amber':{brand:'#16213E',bdk:'#1F2C52',accent:'#F0A818',adk:'#D18E0C',asoft:'#FDF0D6',ink:'#16213E',ink2:'#1F2C52',paper:'#F5F6FA',line:'#E3E5EE',line2:'#C7CBDC',muted:'#6B7190',onDark:'#A9B1D0'},
+ 'Charcoal + lime':{brand:'#23262B',bdk:'#32363D',accent:'#93C01F',adk:'#7BA216',asoft:'#EDF5D8',ink:'#23262B',ink2:'#32363D',paper:'#F6F7F5',line:'#E4E6E2',line2:'#C8CBC4',muted:'#6E7278',onDark:'#B6BAC2'},
+ 'Plum + gold':{brand:'#3A1B3D',bdk:'#4C2650',accent:'#D4A017',adk:'#B5860C',asoft:'#FBF1D8',ink:'#3A1B3D',ink2:'#4C2650',paper:'#FAF6FA',line:'#EDE3EE',line2:'#D6C3D8',muted:'#7A6A7C',onDark:'#C9AECB'},
+ 'Ocean + sky':{brand:'#0C3B52',bdk:'#134C68',accent:'#1EA3D8',adk:'#1686B4',asoft:'#DFF1FA',ink:'#0C3B52',ink2:'#134C68',paper:'#F3F8FB',line:'#DCE8EF',line2:'#BCD2DE',muted:'#5E7C8C',onDark:'#A6C7D8'},
+ 'Saffron + ink':{brand:'#2C2A26',bdk:'#3D3A34',accent:'#E8761A',adk:'#C75F0D',asoft:'#FDEDDC',ink:'#2C2A26',ink2:'#3D3A34',paper:'#FAF7F2',line:'#EBE5DB',line2:'#D4CBBC',muted:'#75705F',onDark:'#BDB6A6'}
+};
+function applyTheme(name){
+  var t=THEMES[name]; if(!t)return; var r=document.documentElement.style;
+  r.setProperty('--brand',t.brand); r.setProperty('--brand-dk',t.bdk);
+  r.setProperty('--teal',t.accent); r.setProperty('--teal-dk',t.adk); r.setProperty('--teal-soft',t.asoft);
+  r.setProperty('--ink',t.ink); r.setProperty('--ink-2',t.ink2);
+  r.setProperty('--paper',t.paper); r.setProperty('--line',t.line);
+  r.setProperty('--line-2',t.line2); r.setProperty('--muted',t.muted);
+  document.querySelectorAll('.meta,.cd-block .lab,.cartbar .l,.prof .ph').forEach(function(e){e.style.color=t.onDark});
+  try{localStorage.setItem('dg-theme-v3',name)}catch(e){}
+}
+var sw=document.getElementById('swatches');
+Object.keys(THEMES).forEach(function(n){
+  var t=THEMES[n],d=document.createElement('div'); d.className='sw2';
+  d.innerHTML='<div class="dots"><i style="background:'+t.brand+'"></i><i style="background:'+t.accent+'"></i><i style="background:'+t.paper+';box-shadow:inset 0 0 0 1px #ddd"></i></div><span>'+n+'</span>';
+  d.addEventListener('click',function(){applyTheme(n);document.getElementById('tray').classList.remove('on')});
+  sw.appendChild(d);
+});
+document.getElementById('tbtn').addEventListener('click',function(){
+  document.getElementById('tray').classList.toggle('on');
+});
+try{var saved=localStorage.getItem('dg-theme-v3'); if(saved)applyTheme(saved);}catch(e){}
+</script>
 </body>
 </html>
