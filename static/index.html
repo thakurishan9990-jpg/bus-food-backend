@@ -6,768 +6,896 @@
 <title>DhabaGo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Tiro+Devanagari+Hindi:ital@0;1&family=Fraunces:opsz,wght@9..144,400;9..144,600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --ink:#14362E;
-  --brand:#0A8A68;
-  --brand-dk:#077256;
-  --ink-2:#1E4A3E;
-  --ink-3:#2C6353;
-  --paper:#F4F8F6;
-  --card:#FFFFFF;
-  --line:#DEE9E4;
-  --line-2:#BBDCCF;
-  --muted:#5E7A70;
-  --teal:#3C4F49;
-  --teal-dk:#2A3A35;
-  --teal-soft:#E7EDEA;
-  --amber:#C0820F;
-  --amber-soft:#FBF1DC;
-  --red:#C04A3A;
-  --red-soft:#FBECE8;
-  --radius:16px;
-  box-sizing:border-box;
-  padding-top:env(safe-area-inset-top,0px);
-  padding-bottom:env(safe-area-inset-bottom,0px);
+  --ink:#14362E; --brand:#0A8A68; --brand-dk:#077256;
+  --accent:#3C4F49; --accent-dk:#2A3A35; --accent-soft:#E7EDEA;
+  --paper:#F4F8F6; --card:#fff; --line:#DEE9E4; --line2:#BBDCCF; --muted:#5E7A70;
+  --amber:#C0820F; --amber-soft:#FBF1DC; --red:#C04A3A; --red-soft:#FBECE8;
+  --r:16px;
 }
 *,*::before,*::after{box-sizing:border-box}
-html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
-body{
-  margin:0;background:var(--paper);color:var(--ink);
-  font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:16.5px;line-height:1.6;
-  -webkit-font-smoothing:antialiased;
-}
-h1,h2,h3,h4{font-family:'Outfit',system-ui,sans-serif;margin:0;letter-spacing:-.025em;line-height:1.2}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:16.5px;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:'Outfit',system-ui,sans-serif;margin:0;letter-spacing:-.025em;line-height:1.2}
 button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
-input,select,textarea{font:inherit;color:inherit}
+input,select{font:inherit;color:inherit}
+.shell{max-width:1180px;margin:0 auto;padding:0 20px 90px}
 
-.shell{max-width:1260px;margin:0 auto;padding:0 22px 90px}
-
-/* ---------- boot ---------- */
-.boot{position:fixed;inset:0;background:var(--brand);z-index:200;display:grid;place-items:center;animation:bootout .6s cubic-bezier(.76,0,.24,1) 1s forwards}
+/* boot */
+.boot{position:fixed;inset:0;z-index:400;background:var(--brand);display:grid;place-items:center;animation:bootout .7s cubic-bezier(.76,0,.24,1) 1.25s forwards}
+.boot .mkk{display:flex;align-items:center;gap:15px;color:#fff;font-family:'Outfit';font-size:36px;font-weight:700;letter-spacing:-.03em;animation:bootin .75s cubic-bezier(.22,1.3,.36,1)}
+.boot .bus{width:56px;height:56px;border-radius:16px;background:#fff;display:grid;place-items:center;font-size:28px;animation:drive 1.15s cubic-bezier(.22,1,.36,1)}
+.boot .trail{position:absolute;bottom:0;left:0;height:4px;background:rgba(255,255,255,.55);width:0;animation:trail 1.25s cubic-bezier(.4,0,.2,1) forwards}
 @keyframes bootout{to{opacity:0;visibility:hidden;transform:translateY(-100%)}}
-.boot .mk{display:flex;align-items:center;gap:14px;color:#fff;font-family:'Outfit';font-size:34px;font-weight:700;letter-spacing:-.03em;animation:bootin .7s cubic-bezier(.22,1.3,.36,1)}
-@keyframes bootin{from{opacity:0;transform:scale(.82)}to{opacity:1;transform:none}}
-.boot .bus{font-size:40px;animation:drive 1.1s cubic-bezier(.22,1,.36,1)}
-@keyframes drive{from{transform:translateX(-70px);opacity:0}to{transform:none;opacity:1}}
+@keyframes bootin{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
+@keyframes drive{from{transform:translateX(-90px) rotate(-8deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes trail{to{width:100%}}
 
-/* ---------- top bar ---------- */
-.topbar{position:sticky;top:0;z-index:40;background:var(--brand);color:#fff;padding-top:env(safe-area-inset-top,0px)}
-.topbar-in{max-width:1260px;margin:0 auto;padding:17px 22px;display:flex;align-items:center}
-.logo{display:flex;align-items:center;gap:11px;font-family:'Outfit';font-weight:700;font-size:23px;letter-spacing:-.03em;animation:slideIn .7s cubic-bezier(.22,1,.36,1) 1.1s backwards}
-@keyframes slideIn{from{opacity:0;transform:translateX(-22px)}to{opacity:1;transform:none}}
-.logo-mark{width:36px;height:36px;border-radius:11px;background:#fff;color:var(--brand);display:grid;place-items:center;font-size:18px;transition:transform .4s cubic-bezier(.22,1.5,.36,1)}
-.logo:hover .logo-mark{transform:rotate(-12deg) scale(1.1)}
-.logo span.go{color:var(--teal)}
-.mode{font-size:13px;font-weight:600;color:#C6F0E2;padding:6px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.18);white-space:nowrap}
-.mode.live{color:#C7D4CF;border-color:rgba(60,79,73,.55);background:rgba(255,255,255,.15)}
-@media(max-width:560px){.mode{display:none}}
+.topbar{position:sticky;top:0;z-index:40;background:var(--brand);color:#fff;animation:slidedown .6s cubic-bezier(.34,1.4,.64,1) both}
+@keyframes slidedown{from{transform:translateY(-100%)}to{transform:none}}
+.topbar-in{max-width:1180px;margin:0 auto;padding:16px 20px;display:flex;align-items:center;gap:12px}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Outfit';font-weight:700;font-size:22px;letter-spacing:-.03em}
+.logo .mk{width:34px;height:34px;border-radius:10px;background:#fff;display:grid;place-items:center;font-size:19px;transition:transform .4s cubic-bezier(.22,1.5,.36,1)}
+.logo:hover .mk{transform:rotate(-12deg) scale(1.08)}
+.who{margin-left:auto;display:flex;align-items:center;gap:12px;font-size:13.5px}
+.who .role{background:rgba(255,255,255,.18);padding:5px 11px;border-radius:999px;font-weight:600}
+.who .out{text-decoration:underline;opacity:.85}
+.who .out:hover{opacity:1}
+@media(max-width:560px){.who .role{display:none}}
 
-/* ---------- nav ---------- */
-.nav{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
-.nav-in{max-width:1260px;margin:0 auto;padding:0 14px;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.nav{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.93);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.nav-in{max-width:1180px;margin:0 auto;padding:0 14px;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
 .nav-in::-webkit-scrollbar{display:none}
-.nav button{
-  padding:15px 17px;font-size:15px;font-weight:500;color:var(--muted);
-  border-bottom:2.5px solid transparent;white-space:nowrap;position:relative;
-  transition:color .25s ease,border-color .25s ease,transform .25s cubic-bezier(.22,1.4,.36,1);
-}
+.nav button{padding:15px 17px;font-size:15px;font-weight:500;color:var(--muted);border-bottom:2.5px solid transparent;white-space:nowrap;transition:all .25s}
 .nav button:hover{color:var(--ink);transform:translateY(-2px)}
-.nav button.on{color:var(--teal);border-bottom-color:var(--teal);font-weight:600}
+.nav button.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
 
-/* ---------- screens ---------- */
-.screen{display:none;padding-top:30px}
-.screen.on{display:block}
-.page-title{font-size:31px;font-weight:600;margin-bottom:5px}
-.page-sub{color:var(--muted);font-size:15.5px;margin-bottom:26px}
+.screen{display:none;padding-top:26px}
+.screen.on{display:block;animation:fade .45s cubic-bezier(.22,1,.36,1)}
+@keyframes fade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.title{font-size:29px;font-weight:600;margin-bottom:4px;animation:slideleft .6s cubic-bezier(.22,1,.36,1) both}
+.sub{color:var(--muted);font-size:15px;margin-bottom:20px;animation:slideleft .6s cubic-bezier(.22,1,.36,1) .07s both}
+@keyframes slideleft{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
 
-/* reveal on scroll + on screen entry */
-.rv{opacity:0;transform:translateY(26px) scale(.985);transition:opacity .62s cubic-bezier(.22,1,.36,1),transform .62s cubic-bezier(.22,1,.36,1)}
-.rv.in{opacity:1;transform:none}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:19px 21px;margin-bottom:14px;transition:transform .3s cubic-bezier(.22,1,.36,1),box-shadow .3s,border-color .3s}
+.card.tap{cursor:pointer}
+.card.tap:hover{transform:translateY(-4px);border-color:var(--line2);box-shadow:0 14px 34px rgba(20,54,46,.1)}
+.grid{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:780px){.grid{grid-template-columns:1fr 1fr}}
 
-/* ---------- cards ---------- */
-.card{
-  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
-  padding:20px 22px;margin-bottom:15px;
-  transition:transform .32s cubic-bezier(.22,1,.36,1),border-color .32s,box-shadow .32s;
-}
-.card.tap:hover{transform:translateY(-5px);border-color:var(--line-2);box-shadow:0 16px 38px rgba(20,54,46,.1)}
-
-.band{background:var(--brand);color:#fff;border-radius:var(--radius);padding:26px;margin-bottom:24px;position:relative;overflow:hidden}
-.band::after{content:'';position:absolute;top:-60%;right:-10%;width:280px;height:280px;border-radius:50%;background:rgba(255,255,255,.15);animation:drift 9s ease-in-out infinite}
-@keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(-26px,26px)}}
-.band h3{font-size:27px;font-weight:600;margin-bottom:7px;position:relative}
-.band .meta{color:#C6F0E2;font-size:15px;position:relative}
-.alert-pill{
-  display:inline-flex;align-items:center;gap:9px;margin-top:16px;position:relative;
-  background:rgba(192,74,58,.2);border:1px solid rgba(192,74,58,.5);
-  color:#F3CDC5;padding:9px 16px;border-radius:999px;font-size:14px;font-weight:500;
-}
-.alert-pill .ping{width:8px;height:8px;border-radius:50%;background:#E87A64;animation:blip 1.4s infinite}
+.band{background:var(--brand);color:#fff;border-radius:var(--r);padding:22px;margin-bottom:18px;position:relative;overflow:hidden;animation:banddrop .65s cubic-bezier(.22,1.2,.36,1) both}
+@keyframes banddrop{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
+.band::after{content:'';position:absolute;top:-60%;right:-8%;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.13);animation:drift 9s ease-in-out infinite}
+@keyframes drift{0%,100%{transform:translate(0,0)}50%{transform:translate(-24px,24px)}}
+.band h3{font-size:25px;font-weight:600;margin-bottom:5px;position:relative}
+.band .meta{color:#C6F0E2;font-size:14.5px;position:relative}
+.pill-late{display:inline-flex;align-items:center;gap:8px;margin-top:13px;position:relative;background:rgba(192,74,58,.22);border:1px solid rgba(192,74,58,.5);color:#F6D5CD;padding:8px 15px;border-radius:999px;font-size:14px;font-weight:500}
+.ping{width:8px;height:8px;border-radius:50%;background:#E87A64;animation:blip 1.4s infinite}
 @keyframes blip{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.75)}}
 
-/* ---------- stop rail ---------- */
-.rail{position:relative;padding-left:28px}
-.rail::before{content:'';position:absolute;left:7px;top:12px;bottom:12px;width:2px;background:var(--line)}
-.stop{position:relative;padding:16px 0;border-bottom:1px solid var(--line);display:flex;gap:18px;align-items:baseline}
+/* pickers */
+.pickers{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:18px}
+@media(min-width:680px){.pickers{grid-template-columns:1fr 1fr}}
+.pick label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.pick select{width:100%;padding:12px 15px;border:1px solid var(--line2);border-radius:11px;background:var(--card);transition:border-color .22s,box-shadow .22s}
+.pick select:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px rgba(10,138,104,.13)}
+
+/* map */
+.mapwrap{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;margin-bottom:16px;overflow:hidden}
+.mapwrap h4{font-family:'Outfit';font-size:16px;font-weight:600;margin-bottom:4px}
+.mapwrap .mh{font-size:13.5px;color:var(--muted);margin-bottom:12px}
+.rmap{width:100%;height:auto;display:block}
+.rmap .line{fill:none;stroke:var(--line2);stroke-width:3;stroke-linecap:round;stroke-dasharray:1000;stroke-dashoffset:1000;animation:draw 1.6s cubic-bezier(.22,1,.36,1) .2s forwards}
+.rmap .done{fill:none;stroke:var(--brand);stroke-width:3.5;stroke-linecap:round;stroke-dasharray:1000;stroke-dashoffset:1000;animation:draw 1.6s cubic-bezier(.22,1,.36,1) .2s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.rmap circle{cursor:pointer;transition:r .2s}
+.rmap circle:hover{r:9}
+.rmap text{font-family:'Plus Jakarta Sans';font-size:11px;fill:var(--muted)}
+.rmap text.nm{font-weight:600;fill:var(--ink);font-size:12px}
+.rmap .bus{animation:busin .6s cubic-bezier(.22,1.5,.36,1) 1.4s both}
+@keyframes busin{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
+
+.rail{position:relative;padding-left:26px}
+.rail::before{content:'';position:absolute;left:6px;top:12px;bottom:12px;width:2px;background:var(--line)}
+.stop{position:relative;padding:15px 0;border-bottom:1px solid var(--line);display:flex;gap:16px;align-items:flex-start;cursor:pointer;transition:padding-left .25s}
 .stop:last-child{border-bottom:none}
-.stop::before{content:'';position:absolute;left:-25px;top:24px;width:13px;height:13px;border-radius:50%;background:var(--card);border:2.5px solid var(--line-2);transition:all .3s}
-.stop:hover::before{border-color:var(--teal);transform:scale(1.25)}
-.stop.now::before{background:var(--teal);border-color:var(--teal);animation:halo 2.2s infinite}
-@keyframes halo{0%{box-shadow:0 0 0 0 rgba(60,79,73,.5)}70%{box-shadow:0 0 0 14px rgba(60,79,73,0)}100%{box-shadow:0 0 0 0 rgba(60,79,73,0)}}
-.stop .t{font-family:'Outfit';font-size:19px;font-weight:600;min-width:70px}
-.stop .nm{font-weight:600;font-size:17.5px}
-.stop .sub{color:var(--muted);font-size:14px;margin-top:3px}
-.tag{display:inline-block;margin-top:9px;background:var(--teal-soft);color:var(--teal-dk);padding:5px 13px;border-radius:999px;font-size:13px;font-weight:600}
+.stop:hover{padding-left:6px}
+.stop::before{content:'';position:absolute;left:-24px;top:22px;width:13px;height:13px;border-radius:50%;background:var(--card);border:2.5px solid var(--line2);transition:all .3s}
+.stop:hover::before{border-color:var(--brand);transform:scale(1.2)}
+.stop.next::before{background:var(--brand);border-color:var(--brand);animation:halo 2.2s infinite}
+.stop.gone{opacity:.52}
+@keyframes halo{0%{box-shadow:0 0 0 0 rgba(10,138,104,.5)}70%{box-shadow:0 0 0 14px rgba(10,138,104,0)}100%{box-shadow:0 0 0 0 rgba(10,138,104,0)}}
+.stop .t{font-family:'Outfit';font-size:19px;font-weight:600;min-width:66px}
+.stop .nm{font-weight:600;font-size:17px}
+.stop .sm{color:var(--muted);font-size:14px;margin-top:2px}
+.tag{display:inline-block;margin-top:8px;background:var(--accent-soft);color:var(--accent-dk);padding:4px 12px;border-radius:999px;font-size:13px;font-weight:600}
 .tag.warn{background:var(--amber-soft);color:var(--amber)}
+.tag.bad{background:var(--red-soft);color:var(--red)}
 
-/* ---------- grids ---------- */
-.grid{display:grid;grid-template-columns:1fr;gap:15px}
-@media(min-width:760px){.grid{grid-template-columns:1fr 1fr}}
-.dhaba-top{display:flex;justify-content:space-between;align-items:flex-start;gap:13px}
-.dhaba-name{font-family:'Outfit';font-size:20px;font-weight:600}
-.stars{color:var(--amber);font-size:14px;font-weight:600;white-space:nowrap}
-.quote{margin:15px 0;padding:14px 16px;background:var(--paper);border-left:3px solid var(--teal);font-size:15px;color:var(--ink-2);font-style:italic;border-radius:0 10px 10px 0}
-.rowmeta{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);margin-bottom:15px}
-
-/* ---------- buttons + ripple ---------- */
-.btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:9px;
-  background:var(--teal);color:#fff;padding:13px 22px;border-radius:11px;
-  font-weight:600;font-size:15px;position:relative;overflow:hidden;
-  transition:background .22s,transform .14s cubic-bezier(.22,1.5,.36,1),box-shadow .25s;
-}
-.btn:hover{background:var(--teal-dk);transform:translateY(-2px);box-shadow:0 10px 24px rgba(60,79,73,.3)}
-.btn:active{transform:translateY(0) scale(.97)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--accent);color:#fff;padding:12px 20px;border-radius:11px;font-weight:600;font-size:15px;position:relative;overflow:hidden;transition:background .2s,transform .14s,box-shadow .25s}
+.btn:hover{background:var(--accent-dk);transform:translateY(-2px);box-shadow:0 10px 22px rgba(60,79,73,.28)}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.5;pointer-events:none}
 .btn.full{width:100%}
-.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-2);box-shadow:none}
-.btn.ghost:hover{background:var(--card);border-color:var(--ink-3);box-shadow:0 8px 20px rgba(20,54,46,.08)}
-.btn.dark{background:var(--ink)}
-.btn.dark:hover{background:var(--ink-2);box-shadow:0 10px 24px rgba(20,54,46,.28)}
-.rip{position:absolute;border-radius:50%;background:rgba(255,255,255,.45);transform:scale(0);animation:rip .62s cubic-bezier(.22,1,.36,1);pointer-events:none}
-.btn.ghost .rip{background:rgba(60,79,73,.22)}
+.btn.brand{background:var(--brand)}.btn.brand:hover{background:var(--brand-dk)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line2);box-shadow:none}
+.btn.ghost:hover{background:var(--card);border-color:var(--muted)}
+.btn.sm{padding:8px 14px;font-size:13.5px;border-radius:9px}
+.rip{position:absolute;border-radius:50%;background:rgba(255,255,255,.4);transform:scale(0);animation:rip .6s cubic-bezier(.22,1,.36,1);pointer-events:none}
 @keyframes rip{to{transform:scale(2.6);opacity:0}}
 
-/* ---------- menu ---------- */
-.countdown{background:var(--brand);color:#fff;border-radius:var(--radius);padding:21px 24px;margin-bottom:22px;display:flex;flex-wrap:wrap;gap:22px;align-items:center}
-.cd-block .lab{font-size:13px;color:#C6F0E2}
-.cd-block .val{font-family:'Outfit';font-size:24px;font-weight:600}
-.cd-block .val.live{color:var(--teal)}
-.cd-bar{flex:1 1 180px;height:7px;background:rgba(255,255,255,.14);border-radius:999px;overflow:hidden;min-width:140px}
-.cd-fill{height:100%;background:var(--teal);width:0;animation:fill 2.6s cubic-bezier(.22,1,.36,1) .3s forwards}
-@keyframes fill{to{width:68%}}
-
-.item{display:flex;align-items:center;gap:15px;padding:17px 0;border-bottom:1px solid var(--line);transition:padding-left .25s}
-.item:last-child{border-bottom:none}
-.item:hover{padding-left:7px}
-.veg{width:16px;height:16px;border:2px solid var(--teal);border-radius:4px;display:grid;place-items:center;flex-shrink:0}
-.veg::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--teal)}
+.row{display:flex;align-items:center;gap:14px;padding:15px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:none}
+.veg{width:16px;height:16px;border:2px solid var(--brand);border-radius:4px;display:grid;place-items:center;flex-shrink:0}
+.veg::after{content:'';width:8px;height:8px;border-radius:50%;background:var(--brand)}
 .veg.non{border-color:var(--red)}.veg.non::after{background:var(--red)}
-.item-body{flex:1;min-width:0}
-.item-name{font-weight:600;font-size:16px}
-.item-desc{font-size:14px;color:var(--muted)}
+.row .body{flex:1;min-width:0}
+.row .nm{font-weight:600;font-size:16px}
+.row .sm{font-size:14px;color:var(--muted)}
 .price{font-family:'Outfit';font-weight:600;font-size:17px;white-space:nowrap}
-.stepper{display:flex;align-items:center;gap:4px;background:var(--paper);border-radius:10px;padding:4px}
-.stepper button{width:33px;height:33px;border-radius:8px;font-size:19px;font-weight:600;color:var(--teal-dk);transition:background .15s,transform .14s cubic-bezier(.22,1.6,.36,1)}
-.stepper button:hover{background:var(--teal-soft)}
-.stepper button:active{transform:scale(.84)}
-.qty{min-width:24px;text-align:center;font-weight:600;font-size:16px}
-.qty.bump{animation:bump .34s cubic-bezier(.22,1.7,.36,1)}
-@keyframes bump{50%{transform:scale(1.5);color:var(--teal)}}
+.step{display:flex;align-items:center;gap:4px;background:var(--paper);border-radius:10px;padding:4px}
+.step button{width:32px;height:32px;border-radius:8px;font-size:19px;font-weight:600;color:var(--accent-dk);transition:background .15s,transform .14s}
+.step button:hover{background:var(--accent-soft)}
+.step button:active{transform:scale(.85)}
+.qty{min-width:24px;text-align:center;font-weight:600}
+.qty.bump{animation:bump .32s cubic-bezier(.22,1.7,.36,1)}
+@keyframes bump{50%{transform:scale(1.45);color:var(--brand)}}
 
-.cartbar{position:sticky;bottom:14px;margin-top:22px;background:var(--brand);color:#fff;border-radius:var(--radius);padding:18px 22px;display:flex;align-items:center;gap:18px;box-shadow:0 16px 40px rgba(20,54,46,.3)}
+.cartbar{position:sticky;bottom:14px;margin-top:20px;background:var(--brand);color:#fff;border-radius:var(--r);padding:17px 21px;display:flex;align-items:center;gap:16px;box-shadow:0 16px 38px rgba(20,54,46,.3);animation:barup .55s cubic-bezier(.22,1.3,.36,1) both}
+@keyframes barup{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 .cartbar .l{font-size:14px;color:#C6F0E2}
 .cartbar .n{font-family:'Outfit';font-size:21px;font-weight:600}
 
-/* ---------- timeline ---------- */
-.tl{position:relative;padding-left:44px}
-.tl::before{content:'';position:absolute;left:16px;top:16px;bottom:20px;width:2.5px;background:var(--line)}
-.tl-prog{position:absolute;left:16px;top:16px;width:2.5px;background:var(--teal);height:0;transition:height 1.5s cubic-bezier(.22,1,.36,1)}
-.tl-prog.go{height:52%}
-.tlrow{position:relative;padding:0 0 28px}
-.tlrow:last-child{padding-bottom:0}
-.tldot{position:absolute;left:-44px;top:0;width:35px;height:35px;border-radius:50%;background:var(--card);border:2.5px solid var(--line-2);color:var(--muted);display:grid;place-items:center;font-size:15px;font-weight:600}
-.tlrow.done .tldot{background:var(--teal);border-color:var(--teal);color:#fff}
-.tlrow.active .tldot{background:var(--amber);border-color:var(--amber);color:#fff;animation:halo2 2.2s infinite}
-@keyframes halo2{0%{box-shadow:0 0 0 0 rgba(192,130,15,.5)}70%{box-shadow:0 0 0 16px rgba(192,130,15,0)}100%{box-shadow:0 0 0 0 rgba(192,130,15,0)}}
-.tl-label{font-weight:600;font-size:16.5px}
-.tl-time{font-size:14px;color:var(--muted)}
-
-/* ---------- kitchen ---------- */
-.kcard{border-left:4px solid var(--teal)}
-.kcard.urgent{border-left-color:var(--red);background:var(--red-soft)}
-.kid{font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.05em}
-.klist{background:var(--paper);border-radius:10px;padding:14px 16px;margin:13px 0;font-size:15px;line-height:1.95}
-.keta{font-size:14px;font-weight:600;color:var(--teal-dk);margin-bottom:13px}
-.keta.urgent{color:var(--red)}
-
-/* ---------- ops ---------- */
-.kpis{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:24px}
-@media(min-width:760px){.kpis{grid-template-columns:repeat(4,1fr)}}
-.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;transition:transform .3s cubic-bezier(.22,1,.36,1),box-shadow .3s}
-.kpi:hover{transform:translateY(-5px);box-shadow:0 14px 32px rgba(20,54,46,.1)}
-.kpi .lab{font-size:13px;color:var(--muted);margin-bottom:7px}
-.kpi .num{font-family:'Outfit';font-size:34px;font-weight:600;letter-spacing:-.035em}
-.kpi .num span{font-size:16px;color:var(--muted);font-weight:500}
-
-.chart{display:flex;align-items:flex-end;gap:13px;height:170px;padding:0 4px;margin:20px 0 9px}
-.bar{flex:1;background:var(--teal-soft);border-radius:7px 7px 0 0;height:0;transition:height 1.1s cubic-bezier(.22,1,.36,1)}
-.bar.go{height:var(--h)}
-.bar:hover{background:var(--teal)}
-.chart-x{display:flex;gap:13px;padding:0 4px}
-.chart-x span{flex:1;text-align:center;font-size:13px;color:var(--muted)}
-
-.tbl{width:100%;border-collapse:collapse;font-size:15px}
-.tbl th{text-align:left;padding:14px 16px;background:var(--brand);color:#fff;font-weight:500;font-size:14px}
-.tbl td{padding:14px 16px;border-bottom:1px solid var(--line)}
-.tbl tbody tr{transition:background .2s,transform .2s}
-.tbl tbody tr:hover{background:var(--teal-soft)}
-.pill{padding:5px 12px;border-radius:999px;font-size:13px;font-weight:600;white-space:nowrap}
-.pill.ok{background:var(--teal-soft);color:var(--teal-dk)}
-.pill.late{background:var(--red-soft);color:var(--red)}
-.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--card)}
-.flag{background:var(--amber-soft);border:1px solid #EBD5A8;border-radius:var(--radius);padding:18px 20px;margin-top:20px}
-.flag .h{font-weight:600;color:var(--amber);margin-bottom:5px;font-size:16px}
-.flag .b{font-size:15px;color:var(--ink-2)}
-
-/* ---------- search ---------- */
-.search{width:100%;padding:15px 18px;border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:20px;transition:border-color .25s,box-shadow .25s,transform .25s}
-.search:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px rgba(60,79,73,.13);transform:translateY(-2px)}
-.chips{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:22px}
-.chip{padding:9px 17px;border-radius:999px;border:1px solid var(--line-2);background:var(--card);font-size:14px;font-weight:500;color:var(--muted);transition:all .25s cubic-bezier(.22,1.4,.36,1)}
-.chip:hover{border-color:var(--teal);color:var(--teal-dk);transform:translateY(-2px)}
-.chip.on{background:var(--teal);border-color:var(--teal);color:#fff}
-.sec-label{font-size:14px;font-weight:600;color:var(--muted);margin-bottom:11px}
-
-/* ---------- forms ---------- */
-.field{margin-bottom:19px}
-.field label{display:block;font-size:14px;font-weight:600;margin-bottom:8px}
-.field input,.field select,.field textarea{width:100%;padding:13px 16px;border:1px solid var(--line-2);border-radius:11px;background:var(--card);transition:border-color .25s,box-shadow .25s}
-.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 4px rgba(60,79,73,.13)}
-.field .err{font-size:14px;color:var(--red);margin-top:7px;display:none}
-.field.bad input,.field.bad textarea{border-color:var(--red);animation:shake .4s}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:14px;font-weight:600;margin-bottom:7px}
+.field input,.field select{width:100%;padding:12px 15px;border:1px solid var(--line2);border-radius:11px;background:var(--card);transition:border-color .22s,box-shadow .22s}
+.field input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px rgba(10,138,104,.13)}
+.field .err{font-size:13.5px;color:var(--red);margin-top:6px;display:none}
+.field.bad input{border-color:var(--red);animation:shake .4s}
 .field.bad .err{display:block}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
 
-.steps{display:flex;gap:7px;margin-bottom:28px}
-.stepseg{flex:1;text-align:center}
-.stepseg .bar{height:5px;background:var(--line);border-radius:999px;margin-bottom:9px;transition:background .4s}
-.stepseg.done .bar,.stepseg.on .bar{background:var(--teal)}
-.stepseg .lab{font-size:13px;color:var(--muted)}
-.stepseg.on .lab{color:var(--teal-dk);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px}
+.chip{padding:8px 16px;border-radius:999px;border:1px solid var(--line2);background:var(--card);font-size:14px;font-weight:500;color:var(--muted);transition:all .22s}
+.chip:hover{border-color:var(--brand);color:var(--brand-dk);transform:translateY(-2px)}
+.chip.on{background:var(--brand);border-color:var(--brand);color:#fff}
 
-.sum{background:var(--paper);border-radius:12px;padding:18px 20px;margin-bottom:19px}
-.sumrow{display:flex;justify-content:space-between;font-size:15px;padding:6px 0}
-.sumrow.tot{border-top:1px solid var(--line-2);margin-top:9px;padding-top:12px;font-weight:600;font-family:'Outfit';font-size:19px}
+.state{padding:14px 18px;border-radius:12px;background:var(--accent-soft);color:var(--accent-dk);font-size:14.5px;font-weight:500}
+.state.bad{background:var(--red-soft);color:var(--red)}
+.empty{padding:38px 20px;text-align:center;color:var(--muted)}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--line2);border-top-color:var(--brand);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.live{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--muted);margin-left:auto}
+.live i{width:7px;height:7px;border-radius:50%;background:var(--brand);animation:blip 1.8s infinite;display:block}
 
-/* ---------- notes / profile ---------- */
-.note{display:flex;gap:15px;padding:17px 20px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;transition:transform .3s cubic-bezier(.22,1,.36,1),box-shadow .3s}
-.note:hover{transform:translateX(7px);box-shadow:0 12px 28px rgba(20,54,46,.08)}
-.note .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:19px;flex-shrink:0;background:var(--teal-soft)}
-.note .ic.amber{background:var(--amber-soft)}
-.note .tm{font-size:13px;color:var(--muted)}
-.note .ti{font-weight:600;font-size:15.5px;margin:2px 0}
-.note .bd{font-size:14.5px;color:var(--muted)}
-.prof{background:var(--brand);color:#fff;border-radius:var(--radius);padding:26px;margin-bottom:22px;display:flex;align-items:center;gap:18px}
-.avatar{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.22);display:grid;place-items:center;font-family:'Outfit';font-size:23px;font-weight:600;transition:transform .4s cubic-bezier(.22,1.5,.36,1)}
-.prof:hover .avatar{transform:scale(1.08) rotate(-6deg)}
-.prof .nm{font-family:'Outfit';font-size:22px;font-weight:600}
-.prof .ph{color:#C6F0E2;font-size:15px}
-.toggle-row{display:flex;justify-content:space-between;align-items:center;gap:18px}
-.sw{width:50px;height:28px;border-radius:999px;background:var(--line-2);position:relative;transition:background .3s;flex-shrink:0;cursor:pointer}
-.sw::after{content:'';position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .32s cubic-bezier(.22,1.5,.36,1)}
-.sw.on{background:var(--teal)}
-.sw.on::after{transform:translateX(22px)}
+.badge{padding:4px 11px;border-radius:999px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.b-placed{background:var(--accent-soft);color:var(--accent-dk)}
+.b-accepted{background:#E1EEF9;color:#1A5C8A}
+.b-preparing{background:var(--amber-soft);color:var(--amber)}
+.b-ready{background:#DFF3E7;color:#1B7A43}
+.b-picked_up{background:var(--paper);color:var(--muted)}
+.b-cancelled{background:var(--red-soft);color:var(--red)}
 
-/* ---------- modal ---------- */
-.veil{position:fixed;inset:0;background:rgba(20,54,46,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:22px;z-index:90}
-.veil.on{display:flex;animation:fade .25s ease}
-@keyframes fade{from{opacity:0}to{opacity:1}}
-.modal{background:var(--card);border-radius:20px;padding:28px;width:100%;max-width:450px;max-height:86vh;overflow-y:auto;animation:pop .4s cubic-bezier(.22,1.35,.36,1)}
-@keyframes pop{from{opacity:0;transform:translateY(32px) scale(.94)}to{opacity:1;transform:none}}
-.modal h3{font-size:22px;font-weight:600;margin-bottom:7px}
-.modal .lead{color:var(--muted);font-size:15px;margin-bottom:22px}
-.tick{width:64px;height:64px;border-radius:50%;background:var(--teal);color:#fff;display:grid;place-items:center;font-size:31px;margin:0 auto 18px;animation:pop2 .55s cubic-bezier(.22,1.6,.36,1)}
-@keyframes pop2{from{transform:scale(0) rotate(-45deg)}to{transform:none}}
-.rate{display:flex;gap:9px;justify-content:center;font-size:36px;margin:16px 0 22px}
-.rate span{color:var(--line-2);cursor:pointer;transition:transform .18s cubic-bezier(.22,1.6,.36,1),color .18s}
-.rate span:hover{transform:scale(1.28) rotate(-8deg)}
-.rate span.on{color:var(--amber)}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+@media(min-width:780px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:17px 19px;transition:transform .3s,box-shadow .3s}
+.kpi:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(20,54,46,.1)}
+.kpi .lab{font-size:13px;color:var(--muted);margin-bottom:6px}
+.kpi .num{font-family:'Outfit';font-size:32px;font-weight:600;letter-spacing:-.035em;animation:countpop .5s cubic-bezier(.22,1.5,.36,1) both}
+.kpi .num span{font-size:15px;color:var(--muted);font-weight:500}
+@keyframes countpop{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
 
-.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,160%);background:var(--ink);color:#fff;padding:14px 24px;border-radius:999px;font-size:15px;font-weight:500;z-index:95;transition:transform .45s cubic-bezier(.22,1.4,.36,1);box-shadow:0 14px 34px rgba(20,54,46,.35)}
+.rv{opacity:0;transform:translateY(22px) scale(.99);transition:opacity .55s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1)}
+.rv.in{opacity:1;transform:none}
+
+/* auth */
+.gate{position:fixed;inset:0;z-index:300;background:var(--brand);display:grid;place-items:center;padding:22px;overflow-y:auto;animation:gatein .5s cubic-bezier(.22,1,.36,1) 1.5s backwards}
+@keyframes gatein{from{opacity:0}to{opacity:1}}
+.gate.off{display:none}
+.gcard{background:#fff;border-radius:20px;padding:28px;width:100%;max-width:400px;box-shadow:0 24px 60px rgba(0,0,0,.26);animation:pop .45s cubic-bezier(.22,1.3,.36,1)}
+@keyframes pop{from{opacity:0;transform:translateY(26px) scale(.95)}to{opacity:1;transform:none}}
+.gcard h2{font-size:26px;font-weight:600;margin-bottom:3px}
+.gcard .s{color:var(--muted);font-size:14.5px;margin-bottom:20px}
+.tabs{display:flex;gap:4px;background:var(--paper);border-radius:12px;padding:4px;margin-bottom:20px}
+.tabs button{flex:1;padding:10px;border-radius:9px;font-size:14.5px;font-weight:600;color:var(--muted);transition:all .22s}
+.tabs button.on{background:#fff;color:var(--ink);box-shadow:0 2px 8px rgba(20,54,46,.1)}
+.demo{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.demo .t{font-size:12.5px;color:var(--muted);margin-bottom:9px}
+.demo .ds{display:flex;gap:7px;flex-wrap:wrap}
+.demo button{padding:7px 13px;border-radius:999px;border:1px solid var(--line2);font-size:13px;font-weight:500;color:var(--muted);transition:all .2s}
+.demo button:hover{border-color:var(--brand);color:var(--brand-dk)}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,160%);background:var(--ink);color:#fff;padding:14px 24px;border-radius:999px;font-size:15px;font-weight:500;z-index:200;transition:transform .45s cubic-bezier(.22,1.4,.36,1);box-shadow:0 14px 34px rgba(20,54,46,.35);max-width:88vw;text-align:center}
 .toast.on{transform:translate(-50%,0)}
+.toast.bad{background:var(--red)}
+
+
+.hi{font-family:'Tiro Devanagari Hindi',serif;font-weight:400}
+.namaste{font-family:'Fraunces',serif;font-size:30px;font-weight:600;letter-spacing:-.02em;margin-bottom:2px}
+.namaste .hi{font-size:34px;display:block;color:var(--brand);line-height:1.25}
+.band .hi{color:#C6F0E2;font-size:15px}
+.greet{font-family:'Fraunces',serif;font-size:26px;font-weight:600;margin-bottom:2px;letter-spacing:-.02em}
+.greet .hi{color:var(--brand)}
+
+.track{display:flex;align-items:flex-start;gap:0;margin:16px 0 4px}
+.tk{flex:1;text-align:center;position:relative;min-width:0}
+.tk::before{content:'';position:absolute;top:13px;left:-50%;width:100%;height:2.5px;background:var(--line);z-index:0}
+.tk:first-child::before{display:none}
+.tk.done::before,.tk.now::before{background:var(--brand)}
+.tk .dot{position:relative;z-index:1;width:28px;height:28px;border-radius:50%;margin:0 auto 7px;background:var(--card);border:2.5px solid var(--line);display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--muted);transition:all .35s cubic-bezier(.22,1.5,.36,1)}
+.tk.done .dot{background:var(--brand);border-color:var(--brand);color:#fff}
+.tk.now .dot{background:var(--amber);border-color:var(--amber);color:#fff;animation:halo2 2s infinite;transform:scale(1.12)}
+@keyframes halo2{0%{box-shadow:0 0 0 0 rgba(192,130,15,.5)}70%{box-shadow:0 0 0 13px rgba(192,130,15,0)}100%{box-shadow:0 0 0 0 rgba(192,130,15,0)}}
+.tk .en{font-size:11.5px;font-weight:600;color:var(--muted);line-height:1.3}
+.tk.done .en,.tk.now .en{color:var(--ink)}
+.tk .hn{font-family:'Tiro Devanagari Hindi',serif;font-size:11px;color:var(--muted);display:block;line-height:1.5}
+.cancelled-note{background:var(--red-soft);color:var(--red);padding:11px 15px;border-radius:11px;font-size:14px;font-weight:500;margin:14px 0 4px}
+.nowline{font-size:14px;color:var(--amber);font-weight:600;margin-top:10px;display:flex;align-items:center;gap:7px}
+.nowline i{width:7px;height:7px;border-radius:50%;background:var(--amber);animation:blip 1.3s infinite;display:block}
+.gcard .s .hi{font-size:16px;color:var(--brand-dk)}
 
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
-</style>
-
-<style id="themepick">
-.tbtn{position:fixed;right:18px;bottom:18px;z-index:120;width:52px;height:52px;border-radius:50%;
-background:var(--brand);color:#fff;display:grid;place-items:center;font-size:22px;cursor:pointer;
-box-shadow:0 10px 26px rgba(0,0,0,.25);transition:transform .25s cubic-bezier(.22,1.5,.36,1)}
-.tbtn:hover{transform:scale(1.1) rotate(12deg)}
-.tray{position:fixed;right:18px;bottom:82px;z-index:120;background:#fff;border-radius:16px;
-padding:14px;box-shadow:0 18px 46px rgba(0,0,0,.22);display:none;width:224px}
-.tray.on{display:block;animation:pop .3s cubic-bezier(.22,1.3,.36,1)}
-.tray h4{font-size:13px;font-weight:600;margin-bottom:10px;color:#333;font-family:'Plus Jakarta Sans',sans-serif}
-.sw2{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer;transition:background .2s}
-.sw2:hover{background:#F2F2F5}
-.sw2 .dots{display:flex;gap:3px}
-.sw2 .dots i{width:16px;height:16px;border-radius:50%;display:block}
-.sw2 span{font-size:13px;font-weight:500;color:#333;font-family:'Plus Jakarta Sans',sans-serif}
 </style>
 </head>
 <body>
 
-<div class="boot"><div class="mk"><span class="bus">🚌</span>DhabaGo</div></div>
+<div class="boot" id="boot"><div class="mkk"><span class="bus">🚌</span>DhabaGo</div><span class="trail"></span></div>
 
-<div class="topbar"><div class="topbar-in">
-  <div class="logo"><div class="logo-mark">🚌</div>Dhaba<span class="go">Go</span></div>
-  <div style="margin-left:auto;display:flex;align-items:center;gap:11px">
-    <span class="mode" id="mode">Demo data</span>
-    <button class="btn" id="connect" style="padding:9px 16px;font-size:14px">Connect API</button>
+<div class="gate" id="gate"><div class="gcard">
+  <div class="namaste"><span class="hi">नमस्ते</span>Welcome to DhabaGo</div>
+  <div class="s"><span class="hi">सफ़र में खाना, आपके पहुँचने से पहले</span>Order ahead from dhabas on your route</div>
+  <div class="tabs" id="authtabs">
+    <button class="on" data-t="in">Sign in</button>
+    <button data-t="up">Create account</button>
+  </div>
+
+  <div id="pane-in">
+    <div class="field" id="f-phone"><label for="phone">Phone number <span class="hi" style="color:var(--muted);font-weight:400">— मोबाइल नंबर</span></label><input id="phone" inputmode="numeric" placeholder="9876543210"><div class="err">Enter your phone number</div></div>
+    <div class="field" id="f-pw"><label for="pw">Password <span class="hi" style="color:var(--muted);font-weight:400">— पासवर्ड</span></label><input id="pw" type="password" placeholder="Your password"><div class="err" id="pwerr">Sign in failed</div></div>
+    <button class="btn brand full" id="signin">Sign in</button>
+    <div class="demo"><div class="t">Demo accounts (password123)</div><div class="ds" id="demos">
+      <button data-p="9876543210">Passenger</button>
+      <button data-p="9876543211">Dhaba manager</button>
+      <button data-p="9876543212">Admin</button>
+    </div></div>
+  </div>
+
+  <div id="pane-up" style="display:none">
+    <div class="field" id="f-sname"><label for="sname">Your name <span class="hi" style="color:var(--muted);font-weight:400">— आपका नाम</span></label><input id="sname" placeholder="Ishan Singh"><div class="err">Enter your name</div></div>
+    <div class="field" id="f-sphone"><label for="sphone">Phone number</label><input id="sphone" inputmode="numeric" placeholder="10-digit number"><div class="err">Enter a 10–15 digit phone number</div></div>
+    <div class="field" id="f-spw"><label for="spw">Password</label><input id="spw" type="password" placeholder="At least 6 characters"><div class="err" id="spwerr">At least 6 characters</div></div>
+    <button class="btn brand full" id="signup">Create account</button>
+    <div class="demo"><div class="t">You'll be signed in as a passenger.</div></div>
   </div>
 </div></div>
 
-<nav class="nav"><div class="nav-in" id="nav">
-  <button class="on" data-s="trip">Trip</button>
-  <button data-s="dhabas">Dhabas</button>
-  <button data-s="menu">Menu</button>
-  <button data-s="checkout">Checkout</button>
-  <button data-s="order">Order</button>
-  <button data-s="search">Search</button>
-  <button data-s="notify">Alerts</button>
-  <button data-s="profile">Profile</button>
-  <button data-s="kitchen">Kitchen</button>
-  <button data-s="ops">Operations</button>
-</div></nav>
+<div class="topbar"><div class="topbar-in">
+  <div class="logo"><span class="mk">🚌</span>DhabaGo</div>
+  <div class="who"><span class="role" id="urole"></span><b id="uname"></b><button class="out" id="signout">Sign out</button></div>
+</div></div>
+
+<nav class="nav"><div class="nav-in" id="nav"></div></nav>
 
 <main class="shell">
 
-<section class="screen on" id="trip">
-  <div class="band rv">
-    <h3>Delhi → Dehradun</h3>
-    <div class="meta">Uttarakhand Roadways · departed 08:00 · 5 stops ahead</div>
-    <div class="alert-pill"><span class="ping"></span> Running 15 min late — order cut-offs shifted</div>
+<section class="screen" id="s-trip">
+  <h2 class="title">Your journey <span class="hi" style="font-size:22px;color:var(--brand)">आपकी यात्रा</span></h2>
+  <p class="sub">Choose your route and bus, then tap a stop to order. <span class="hi">अपनी बस चुनें।</span></p>
+  <div class="pickers">
+    <div class="pick"><label for="selroute">Route <span class="hi">— रूट</span></label><select id="selroute"></select></div>
+    <div class="pick"><label for="seltrip">Bus <span class="hi">— बस</span></label><select id="seltrip"></select></div>
   </div>
-  <h2 class="page-title rv">Stops ahead</h2>
-  <p class="page-sub rv">Pre-order at any stop before the kitchen cut-off.</p>
-  <div class="card rv"><div class="rail">
-    <div class="stop now"><div class="t">10:54</div><div><div class="nm">Meerut</div><div class="sub">20 min halt · 6 dhabas open</div><span class="tag">Next stop · order by 10:38</span></div></div>
-    <div class="stop"><div class="t">11:24</div><div><div class="nm">Khatauli</div><div class="sub">10 min halt · 3 dhabas open</div><span class="tag warn">Short halt</span></div></div>
-    <div class="stop"><div class="t">11:54</div><div><div class="nm">Muzaffarnagar</div><div class="sub">10 min halt · 5 dhabas open</div></div></div>
-    <div class="stop"><div class="t">12:34</div><div><div class="nm">Roorkee</div><div class="sub">10 min halt · 8 dhabas open</div></div></div>
-    <div class="stop"><div class="t">12:54</div><div><div class="nm">Chhutmalpur</div><div class="sub">5 min halt · 2 dhabas open</div><span class="tag warn">Pickup only</span></div></div>
-  </div></div>
+  <div id="tripband"></div>
+  <div id="mapbox"></div>
+  <div class="card"><div class="rail" id="stoplist"><div class="empty"><span class="spin"></span>Loading…</div></div></div>
 </section>
 
-<section class="screen" id="dhabas">
-  <h2 class="page-title rv">Dhabas at Meerut</h2>
-  <p class="page-sub rv">Bus arrives 10:54 · 20 minute halt</p>
-  <div class="grid">
-    <div class="card tap rv"><div class="dhaba-top"><div class="dhaba-name">Punjabi Rasoi</div><div class="stars">★ 4.6 · 287</div></div><div class="quote">Reviewers keep coming back for the butter chicken and say the wait is worth it.</div><div class="rowmeta"><span>Prep 18 min</span><span>Avg bill ₹250</span></div><button class="btn full" data-go="menu">View menu</button></div>
-    <div class="card tap rv"><div class="dhaba-top"><div class="dhaba-name">South Spice</div><div class="stars">★ 4.3 · 192</div></div><div class="quote">Crisp dosas and quick service are the two things reviewers mention most.</div><div class="rowmeta"><span>Prep 12 min</span><span>Avg bill ₹180</span></div><button class="btn full" data-go="menu">View menu</button></div>
-    <div class="card tap rv"><div class="dhaba-top"><div class="dhaba-name">Momo King</div><div class="stars">★ 4.5 · 156</div></div><div class="quote">Freshly steamed momos; several reviews call out the chutney.</div><div class="rowmeta"><span>Prep 10 min</span><span>Avg bill ₹150</span></div><button class="btn full" data-go="menu">View menu</button></div>
-    <div class="card tap rv"><div class="dhaba-top"><div class="dhaba-name">Sharma Vaishno Dhaba</div><div class="stars">★ 4.1 · 98</div></div><div class="quote">Pure veg thali gets steady praise for portion size and value.</div><div class="rowmeta"><span>Prep 15 min</span><span>Avg bill ₹140</span></div><button class="btn full" data-go="menu">View menu</button></div>
-  </div>
+<section class="screen" id="s-dhabas">
+  <h2 class="title" id="dh-title">Dhabas</h2>
+  <p class="sub" id="dh-sub"></p>
+  <div id="dhabalist" class="grid"></div>
 </section>
 
-<section class="screen" id="menu">
-  <h2 class="page-title rv">Punjabi Rasoi</h2>
-  <p class="page-sub rv">Meerut stop · ★ 4.6 · North Indian</p>
-  <div class="countdown rv">
-    <div class="cd-block"><div class="lab">Order closes in</div><div class="val live" id="clock">07:42</div></div>
-    <div class="cd-block"><div class="lab">Food ready by</div><div class="val">10:48</div></div>
-    <div class="cd-block"><div class="lab">Bus arrives</div><div class="val">10:54</div></div>
-    <div class="cd-bar"><div class="cd-fill"></div></div>
-  </div>
-  <div class="card rv" id="menulist">
-    <div class="item"><div class="veg non"></div><div class="item-body"><div class="item-name">Butter chicken</div><div class="item-desc">Half plate · boneless</div></div><div class="price">₹280</div><div class="stepper"><button data-d="-1">−</button><span class="qty">1</span><button data-d="1">+</button></div></div>
-    <div class="item"><div class="veg"></div><div class="item-body"><div class="item-name">Garlic naan</div><div class="item-desc">Tandoor fresh</div></div><div class="price">₹60</div><div class="stepper"><button data-d="-1">−</button><span class="qty">2</span><button data-d="1">+</button></div></div>
-    <div class="item"><div class="veg"></div><div class="item-body"><div class="item-name">Paneer tikka masala</div><div class="item-desc">Full plate</div></div><div class="price">₹320</div><div class="stepper"><button data-d="-1">−</button><span class="qty">0</span><button data-d="1">+</button></div></div>
-    <div class="item"><div class="veg"></div><div class="item-body"><div class="item-name">Dal makhani</div><div class="item-desc">Slow cooked overnight</div></div><div class="price">₹190</div><div class="stepper"><button data-d="-1">−</button><span class="qty">0</span><button data-d="1">+</button></div></div>
-    <div class="item"><div class="veg"></div><div class="item-body"><div class="item-name">Masala chai</div><div class="item-desc">Kulhad · 150 ml</div></div><div class="price">₹40</div><div class="stepper"><button data-d="-1">−</button><span class="qty">1</span><button data-d="1">+</button></div></div>
-  </div>
-  <div class="cartbar"><div><div class="l" id="cartcount">4 items</div><div class="n" id="carttotal">₹440</div></div><button class="btn" style="margin-left:auto" data-go="checkout">Review order</button></div>
+<section class="screen" id="s-menu">
+  <h2 class="title" id="mn-title">Menu</h2>
+  <p class="sub" id="mn-sub"></p>
+  <div id="cutoff"></div>
+  <div class="card" id="menulist"></div>
+  <div class="field" style="max-width:260px;margin-top:18px" id="f-seat"><label for="seat">Seat number <span class="hi" style="color:var(--muted);font-weight:400">— सीट</span></label><input id="seat" placeholder="A-12"><div class="err">Enter your seat number</div></div>
+  <div class="cartbar"><div><div class="l" id="cartcount">0 items</div><div class="n" id="carttotal">₹0</div></div>
+  <button class="btn" style="margin-left:auto" id="placeorder" disabled>Place order</button></div>
 </section>
 
-<section class="screen" id="checkout">
-  <h2 class="page-title rv">Checkout</h2>
-  <p class="page-sub rv">Punjabi Rasoi · Meerut stop</p>
-  <div class="steps rv">
-    <div class="stepseg done"><div class="bar"></div><div class="lab">Cart</div></div>
-    <div class="stepseg on"><div class="bar"></div><div class="lab">Details</div></div>
-    <div class="stepseg"><div class="bar"></div><div class="lab">Payment</div></div>
-    <div class="stepseg"><div class="bar"></div><div class="lab">Done</div></div>
-  </div>
-  <div class="grid">
-    <div class="card rv">
-      <div class="field" id="f-seat"><label for="seat">Seat number</label><input id="seat" placeholder="A-12"><div class="err">Enter your seat number</div></div>
-      <div class="field"><label for="pay">Payment method</label><select id="pay"><option>UPI</option><option>Card</option><option>Cash at counter</option></select></div>
-      <div class="field"><label for="note">Notes for the kitchen</label><textarea id="note" rows="3" placeholder="Less spicy, pack separately"></textarea></div>
-    </div>
-    <div class="card rv">
-      <div class="sum">
-        <div class="sumrow"><span>Butter chicken × 1</span><span>₹280</span></div>
-        <div class="sumrow"><span>Garlic naan × 2</span><span>₹120</span></div>
-        <div class="sumrow"><span>Masala chai × 1</span><span>₹40</span></div>
-        <div class="sumrow"><span>Platform fee</span><span>₹0</span></div>
-        <div class="sumrow tot"><span>Total</span><span>₹440</span></div>
-      </div>
-      <button class="btn full" id="place">Place order</button>
-    </div>
-  </div>
+<section class="screen" id="s-orders">
+  <h2 class="title">Your orders <span class="hi" style="font-size:22px;color:var(--brand)">आपके ऑर्डर</span></h2>
+  <p class="sub" style="display:flex;align-items:center">Live status from the kitchen.<span class="live"><i></i>auto-updating</span></p>
+  <div id="orderlist"></div>
 </section>
 
-<section class="screen" id="order">
-  <div class="band rv"><h3>Order #ORD-78923</h3><div class="meta">Punjabi Rasoi · Meerut · ₹440 · seat A-12</div></div>
-  <div class="card rv"><div class="tl"><div class="tl-prog" id="tlprog"></div>
-    <div class="tlrow done"><div class="tldot">✓</div><div class="tl-label">Order placed</div><div class="tl-time">10:31</div></div>
-    <div class="tlrow done"><div class="tldot">✓</div><div class="tl-label">Accepted by kitchen</div><div class="tl-time">10:32</div></div>
-    <div class="tlrow active"><div class="tldot">●</div><div class="tl-label">Being prepared</div><div class="tl-time">started 10:35 · 13 min left</div></div>
-    <div class="tlrow"><div class="tldot">3</div><div class="tl-label">Ready for pickup</div><div class="tl-time">expected 10:48</div></div>
-    <div class="tlrow"><div class="tldot">4</div><div class="tl-label">Bus arrives</div><div class="tl-time">expected 10:54</div></div>
-  </div></div>
-  <div class="grid"><button class="btn ghost rv" id="rate-open">Rate a past order</button><button class="btn ghost rv" id="cancel">Cancel order</button></div>
+<section class="screen" id="s-kitchen">
+  <h2 class="title">Kitchen queue <span class="hi" style="font-size:22px;color:var(--brand)">रसोई</span></h2>
+  <p class="sub" style="display:flex;align-items:center"><span id="kt-sub">Orders sorted by bus arrival.</span><span class="live"><i></i>auto-updating</span></p>
+  <div class="chips" id="ktfilter">
+    <button class="chip on" data-f="open">Open</button>
+    <button class="chip" data-f="all">All</button>
+  </div>
+  <div id="kitchenlist" class="grid"></div>
 </section>
 
-<section class="screen" id="search">
-  <h2 class="page-title rv">Find a dhaba</h2>
-  <p class="page-sub rv">Across every stop on your route</p>
-  <input class="search rv" id="q" placeholder="Search dishes or dhabas">
-  <div class="sec-label rv">Filters</div>
-  <div class="chips rv" id="chips">
-    <button class="chip on">★ 4.0+</button><button class="chip">Pure veg</button>
-    <button class="chip">Under ₹200</button><button class="chip">Ready in 15 min</button>
-    <button class="chip">North Indian</button><button class="chip">South Indian</button>
-    <button class="chip">Chinese</button><button class="chip">Chai and snacks</button>
-  </div>
-  <div class="sec-label" id="rescount">4 results</div>
-  <div class="grid" id="results">
-    <div class="card tap rv" data-n="punjabi rasoi butter chicken north indian"><div class="dhaba-top"><div class="dhaba-name">Punjabi Rasoi</div><div class="stars">★ 4.6</div></div><div class="rowmeta" style="margin-top:13px"><span>Meerut · 18 min</span><span>₹250</span></div><button class="btn full" data-go="menu">View menu</button></div>
-    <div class="card tap rv" data-n="south spice dosa idli south indian"><div class="dhaba-top"><div class="dhaba-name">South Spice</div><div class="stars">★ 4.3</div></div><div class="rowmeta" style="margin-top:13px"><span>Meerut · 12 min</span><span>₹180</span></div><button class="btn full" data-go="menu">View menu</button></div>
-    <div class="card tap rv" data-n="momo king chinese momos noodles"><div class="dhaba-top"><div class="dhaba-name">Momo King</div><div class="stars">★ 4.5</div></div><div class="rowmeta" style="margin-top:13px"><span>Khatauli · 10 min</span><span>₹150</span></div><button class="btn full" data-go="menu">View menu</button></div>
-    <div class="card tap rv" data-n="highway chai corner tea snacks samosa"><div class="dhaba-top"><div class="dhaba-name">Highway Chai Corner</div><div class="stars">★ 4.2</div></div><div class="rowmeta" style="margin-top:13px"><span>Roorkee · 6 min</span><span>₹80</span></div><button class="btn full" data-go="menu">View menu</button></div>
-  </div>
-</section>
-
-<section class="screen" id="notify">
-  <h2 class="page-title rv">Alerts</h2>
-  <p class="page-sub rv">Order and trip updates</p>
-  <div class="note rv"><div class="ic">🍳</div><div><div class="tm">2 min ago</div><div class="ti">Kitchen started your order</div><div class="bd">Punjabi Rasoi is preparing order #ORD-78923.</div></div></div>
-  <div class="note rv"><div class="ic amber">⏱</div><div><div class="tm">14 min ago</div><div class="ti">Bus running 15 min late</div><div class="bd">Your Meerut arrival moved from 10:39 to 10:54. Cut-off updated.</div></div></div>
-  <div class="note rv"><div class="ic">✓</div><div><div class="tm">22 min ago</div><div class="ti">Order confirmed</div><div class="bd">#ORD-78923 accepted. Ready by 10:48.</div></div></div>
-  <div class="note rv"><div class="ic amber">★</div><div><div class="tm">Yesterday</div><div class="ti">Rate South Spice</div><div class="bd">How was order #ORD-78841?</div></div></div>
-</section>
-
-<section class="screen" id="profile">
-  <div class="prof rv"><div class="avatar">AK</div><div><div class="nm">Amit Kumar</div><div class="ph">+91 98765 43210 · passenger</div></div></div>
-  <div class="grid">
-    <div class="card rv">
-      <h3 style="font-size:18px;font-weight:600;margin-bottom:15px">Preferences</h3>
-      <div class="toggle-row" style="padding:11px 0;border-bottom:1px solid var(--line)"><div><div style="font-weight:600;font-size:15.5px">Push notifications</div><div style="font-size:14px;color:var(--muted)">Order and delay updates</div></div><div class="sw on"></div></div>
-      <div class="toggle-row" style="padding:11px 0;border-bottom:1px solid var(--line)"><div><div style="font-weight:600;font-size:15.5px">SMS alerts</div><div style="font-size:14px;color:var(--muted)">When food is ready</div></div><div class="sw on"></div></div>
-      <div class="toggle-row" style="padding:11px 0"><div><div style="font-weight:600;font-size:15.5px">Veg only by default</div><div style="font-size:14px;color:var(--muted)">Filter menus automatically</div></div><div class="sw"></div></div>
-    </div>
-    <div class="card rv">
-      <h3 style="font-size:18px;font-weight:600;margin-bottom:15px">Past orders</h3>
-      <div class="item"><div class="item-body"><div class="item-name">#ORD-78841 · South Spice</div><div class="item-desc">9 Oct · ₹320 · picked up</div></div><button class="btn ghost" id="rate-open-2" style="padding:9px 16px">Rate</button></div>
-      <div class="item"><div class="item-body"><div class="item-name">#ORD-78702 · Momo King</div><div class="item-desc">3 Oct · ₹210 · picked up</div></div><span class="stars">★ 5</span></div>
-      <button class="btn ghost full" style="margin-top:15px">Sign out</button>
-    </div>
-  </div>
-</section>
-
-<section class="screen" id="kitchen">
-  <h2 class="page-title rv">Kitchen desk</h2>
-  <p class="page-sub rv">Punjabi Rasoi · 3 open orders · sorted by bus arrival</p>
-  <div class="grid">
-    <div class="card kcard urgent rv"><div class="kid">#ORD-78923</div><div style="font-weight:600;font-size:17px;margin-top:5px">Amit Kumar · seat A-12</div><div class="klist">1 × Butter chicken<br>2 × Garlic naan<br>1 × Masala chai</div><div class="keta urgent">Bus 10:54 · ready by 10:48 · 13 min left</div><button class="btn full dark">Mark ready</button></div>
-    <div class="card kcard rv"><div class="kid">#ORD-78924</div><div style="font-weight:600;font-size:17px;margin-top:5px">Priya Singh · seat B-08</div><div class="klist">1 × Paneer tikka masala<br>1 × Plain naan<br>2 × Masala chai</div><div class="keta">Bus 10:54 · ready by 10:48 · preparing</div><button class="btn full">Start preparing</button></div>
-    <div class="card kcard rv"><div class="kid">#ORD-78925</div><div style="font-weight:600;font-size:17px;margin-top:5px">Rajesh Patel · seat C-04</div><div class="klist">1 × Dal makhani<br>3 × Tandoori roti</div><div class="keta">Bus 11:24 · ready by 11:18 · new</div><button class="btn full">Accept order</button></div>
-  </div>
-</section>
-
-<section class="screen" id="ops">
-  <h2 class="page-title rv">Operations</h2>
-  <p class="page-sub rv">Live across all routes · updated just now</p>
-  <div class="kpis">
-    <div class="kpi rv"><div class="lab">Active trips</div><div class="num" data-count="12">0</div></div>
-    <div class="kpi rv"><div class="lab">Open orders</div><div class="num" data-count="47">0</div></div>
-    <div class="kpi rv"><div class="lab">Dhabas online</div><div class="num"><span class="cnum" data-count="28">0</span><span>/34</span></div></div>
-    <div class="kpi rv"><div class="lab">Avg prep time</div><div class="num"><span class="cnum" data-count="14">0</span><span> min</span></div></div>
-  </div>
-  <div class="card rv">
-    <h3 style="font-size:18px;font-weight:600">Orders by stop · today</h3>
-    <div class="chart">
-      <div class="bar" style="--h:48%"></div><div class="bar" style="--h:88%"></div>
-      <div class="bar" style="--h:36%"></div><div class="bar" style="--h:66%"></div><div class="bar" style="--h:22%"></div>
-    </div>
-    <div class="chart-x"><span>Meerut</span><span>Khatauli</span><span>Muzaff.</span><span>Roorkee</span><span>Chhutm.</span></div>
-  </div>
-  <h3 class="rv" style="font-size:18px;font-weight:600;margin:24px 0 13px">Live trips</h3>
-  <div class="tblwrap rv"><table class="tbl">
-    <thead><tr><th>Trip</th><th>Route</th><th>Status</th><th>Orders</th></tr></thead>
-    <tbody>
-      <tr><td>DL-234</td><td>Delhi → Dehradun</td><td><span class="pill late">+15 min</span></td><td>8</td></tr>
-      <tr><td>DL-567</td><td>Delhi → Mussoorie</td><td><span class="pill ok">On time</span></td><td>12</td></tr>
-      <tr><td>GZ-890</td><td>Ghaziabad → Rishikesh</td><td><span class="pill ok">On time</span></td><td>6</td></tr>
-      <tr><td>DL-118</td><td>Delhi → Haridwar</td><td><span class="pill late">+8 min</span></td><td>11</td></tr>
-    </tbody>
-  </table></div>
-  <div class="flag rv"><div class="h">Worth a look · Punjabi Rasoi</div><div class="b">8 orders queued against an 18 min prep time. Two buses arrive within the same 20 minute window.</div></div>
+<section class="screen" id="s-ops">
+  <h2 class="title">Operations <span class="hi" style="font-size:22px;color:var(--brand)">संचालन</span></h2>
+  <p class="sub" style="display:flex;align-items:center">Live trips across every route.<span class="live"><i></i>auto-updating</span></p>
+  <div class="kpis" id="opskpis"></div>
+  <h3 style="font-size:18px;font-weight:600;margin:20px 0 12px">Trips</h3>
+  <div id="opstrips"></div>
 </section>
 
 </main>
 
-<div class="veil" id="veil-done"><div class="modal" style="text-align:center">
-  <div class="tick">✓</div><h3>Order placed</h3><p class="lead">#ORD-78923 · Punjabi Rasoi</p>
-  <div class="sum" style="text-align:left">
-    <div class="sumrow"><span>Ready by</span><span>10:48</span></div>
-    <div class="sumrow"><span>Bus arrives</span><span>10:54</span></div>
-    <div class="sumrow"><span>Seat</span><span id="seatout">A-12</span></div>
-    <div class="sumrow tot"><span>Paid</span><span>₹440</span></div>
-  </div>
-  <button class="btn full" id="track">Track order</button>
-</div></div>
-
-<div class="veil" id="veil-rate"><div class="modal">
-  <h3>Rate your order</h3><p class="lead">South Spice · #ORD-78841</p>
-  <div class="rate" id="rate"><span>★</span><span>★</span><span>★</span><span>★</span><span>★</span></div>
-  <div class="field" id="f-rev"><label for="rev">What stood out?</label><textarea id="rev" rows="3" placeholder="Dosa was crisp, service was quick"></textarea><div class="err">Write a line before submitting</div></div>
-  <div style="display:flex;gap:11px"><button class="btn ghost" style="flex:1" data-close>Cancel</button><button class="btn" style="flex:1" id="sendrev">Submit</button></div>
-</div></div>
-
-<div class="toast" id="toast">Saved</div>
+<div class="toast" id="toast"></div>
 
 <script>
 var API={
   base:'',
   token:null,
-  live:false,
+  user:null,
   async call(path,opts){
     opts=opts||{};
     var h={'Content-Type':'application/json'};
     if(this.token)h['Authorization']='Bearer '+this.token;
     var r=await fetch(this.base+path,{method:opts.method||'GET',headers:h,body:opts.body?JSON.stringify(opts.body):undefined});
-    if(!r.ok)throw new Error(path+' → '+r.status);
-    return r.json();
+    if(r.status===204)return null;
+    var d=null; try{ d=await r.json(); }catch(e){}
+    if(!r.ok){
+      var m=(d&&d.detail)||r.statusText||('HTTP '+r.status);
+      if(Array.isArray(m))m=m.map(function(x){return x.msg}).join(', ');
+      var err=new Error(m); err.status=r.status; throw err;
+    }
+    return d;
   },
   async login(phone,password){
     var body=new URLSearchParams({username:phone,password:password});
     var r=await fetch(this.base+'/auth/login',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body});
-    if(!r.ok)throw new Error('login '+r.status);
-    var d=await r.json(); this.token=d.access_token; return d;
+    var d=null; try{ d=await r.json(); }catch(e){}
+    if(!r.ok)throw new Error((d&&d.detail)||('HTTP '+r.status));
+    this.token=d.access_token; this.user=d.user; return d;
+  },
+  async signup(phone,name,password){
+    var d=await this.call('/auth/signup',{method:'POST',body:{phone:phone,name:name,password:password}});
+    this.token=d.access_token; this.user=d.user; return d;
   }
 };
 
-function setMode(on){
-  API.live=on;
-  var d=document.getElementById('mode');
-  d.textContent=on?'Live API':'Demo data';
-  d.className='mode'+(on?' live':'');
+var ST={routes:[],route:null,trips:[],trip:null,stops:[],stop:null,dhaba:null,menu:[],cart:{},menuCache:{}};
+var POLL=null, CURRENT='';
+
+function money(n){ return '₹'+Math.round(n).toLocaleString('en-IN'); }
+function num(v){ var n=parseFloat(v); return isNaN(n)?0:n; }
+function hhmm(iso){ var d=new Date(iso); return isNaN(d)?'--:--':String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function dayLabel(iso){
+  var d=new Date(iso), t=new Date();
+  var same=d.toDateString()===t.toDateString();
+  var tom=new Date(t.getTime()+864e5).toDateString()===d.toDateString();
+  return same?'today':(tom?'tomorrow':d.toLocaleDateString('en-IN',{day:'numeric',month:'short'}));
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]}); }
+function toast(m,bad){
+  var t=document.getElementById('toast');
+  t.textContent=m; t.className='toast on'+(bad?' bad':'');
+  clearTimeout(t._h); t._h=setTimeout(function(){t.className='toast'+(bad?' bad':'')},3400);
 }
 
-async function goLive(){
-  var step='login';
-  try{
-    await API.login('9876543210','password123');
-    setMode(true);
-    step='routes'; var routes=await API.call('/routes');
-    if(!routes||!routes.length)throw new Error('empty');
-    step='trips'; var trips=await API.call('/routes/'+routes[0].id+'/trips');
-    if(!trips||!trips.length)throw new Error('empty');
-    step='stops'; await paintTrip(trips[0].id,routes[0]);
-    toast('Connected — live data');
-  }catch(e){
-    if(step==='login'){ setMode(false); toast('Login failed: '+e.message); }
-    else { toast('Connected, but '+step+' failed: '+e.message); }
+var _io=new IntersectionObserver(function(es){
+  es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); _io.unobserve(e.target); } });
+},{threshold:.08,rootMargin:'0px 0px -30px 0px'});
+function reveal(el){
+  if(!el)return;
+  var kids=el.children,n=0;
+  for(var i=0;i<kids.length;i++){
+    var k=kids[i];
+    if(k.classList.contains('empty')||k.classList.contains('state'))continue;
+    k.classList.add('rv'); k.style.transitionDelay=((n%8)*55)+'ms'; n++;
+    var r=k.getBoundingClientRect();
+    if(r.top<window.innerHeight+60){ (function(x){requestAnimationFrame(function(){requestAnimationFrame(function(){x.classList.add('in')})})})(k); }
+    else _io.observe(k);
   }
 }
+setTimeout(function(){ var b=document.getElementById('boot'); if(b)b.remove(); },2300);
 
-function hhmm(iso){
-  var d=new Date(iso);
-  return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
-}
+var NAV={
+  passenger:[['s-trip','Trip'],['s-dhabas','Dhabas'],['s-menu','Menu'],['s-orders','Orders']],
+  dhaba:[['s-kitchen','Kitchen']],
+  admin:[['s-ops','Operations'],['s-trip','Trips']]
+};
+var LABEL={passenger:'Passenger',dhaba:'Dhaba manager',admin:'Admin'};
 
-async function paintTrip(tripId,route){
-  var stops=await API.call('/trips/'+tripId+'/upcoming-stops');
-  var trip=(stops&&stops.trip)||{};
-  if(stops&&stops.stops)stops=stops.stops;
-  var band=document.querySelector('#trip .band');
-  band.querySelector('h3').textContent=(route&&route.name)||(trip.route&&trip.route.name)||'Trip '+tripId;
-  band.querySelector('.meta').textContent=(trip.operator||'')+(trip.departure_time?' · departed '+hhmm(trip.departure_time):'')+' · '+stops.length+' stops ahead';
-  var pill=band.querySelector('.alert-pill');
-  if(trip.current_delay_minutes>0){
-    pill.style.display='';
-    pill.innerHTML='<span class="ping"></span> Running '+trip.current_delay_minutes+' min late — order cut-offs shifted';
-  }else{pill.style.display='none'}
-  var rail=document.querySelector('#trip .rail');
-  rail.innerHTML=stops.map(function(s,i){
-    return '<div class="stop'+(i===0?' now':'')+'"><div class="t">'+hhmm(s.expected_arrival_time||s.eta||s.arrival_time)+'</div>'+
-      '<div><div class="nm">'+(s.name||(s.stop&&s.stop.name)||'Stop')+'</div><div class="sub">'+(s.halt_duration_minutes||0)+' min halt</div>'+
-      (i===0?'<span class="tag">Next stop</span>':'')+'</div></div>';
+function buildNav(role){
+  var items=NAV[role]||NAV.passenger;
+  document.getElementById('nav').innerHTML=items.map(function(i,ix){
+    return '<button data-s="'+i[0]+'"'+(ix===0?' class="on"':'')+'>'+i[1]+'</button>';
   }).join('');
 }
-
-var io=new IntersectionObserver(function(es){
-  es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in')}});
-},{threshold:.1,rootMargin:'0px 0px -40px 0px'});
-function watch(root){
-  (root||document).querySelectorAll('.rv').forEach(function(el,i){
-    el.style.transitionDelay=(i%7)*55+'ms'; io.observe(el);
-  });
-}
-setTimeout(function(){watch()},1200);
-
-function playScreen(el){
-  el.querySelectorAll('.rv').forEach(function(x){x.classList.remove('in')});
-  requestAnimationFrame(function(){
-    el.querySelectorAll('.rv').forEach(function(x){
-      var r=x.getBoundingClientRect();
-      if(r.top<window.innerHeight+40){x.classList.add('in')}
-    });
-  });
-  var p=el.querySelector('.tl-prog'); if(p){p.classList.remove('go');requestAnimationFrame(function(){p.classList.add('go')})}
-  el.querySelectorAll('.bar').forEach(function(b,i){
-    b.classList.remove('go'); b.style.transitionDelay=i*90+'ms';
-    setTimeout(function(){b.classList.add('go')},60);
-  });
-  el.querySelectorAll('[data-count]').forEach(function(n){
-    var end=parseInt(n.dataset.count,10),t0=null;
-    function step(ts){ if(!t0)t0=ts; var p=Math.min((ts-t0)/900,1);
-      n.textContent=Math.round(end*(1-Math.pow(1-p,3))); if(p<1)requestAnimationFrame(step)}
-    requestAnimationFrame(step);
-  });
-}
-
 function show(id){
+  CURRENT=id;
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('on')});
   document.querySelectorAll('#nav button').forEach(function(b){b.classList.toggle('on',b.dataset.s===id)});
-  var el=document.getElementById(id); if(!el)return;
-  el.classList.add('on'); window.scrollTo({top:0,behavior:'smooth'}); playScreen(el);
+  var el=document.getElementById(id); if(el)el.classList.add('on');
+  window.scrollTo({top:0,behavior:'smooth'});
+  startPolling();
 }
 document.getElementById('nav').addEventListener('click',function(e){
-  var b=e.target.closest('button'); if(b)show(b.dataset.s);
+  var b=e.target.closest('button'); if(!b)return;
+  var s=b.dataset.s; show(s);
+  if(s==='s-trip')loadRoutes();
+  if(s==='s-dhabas')loadDhabas();
+  if(s==='s-menu')loadMenu();
+  if(s==='s-orders')loadOrders();
+  if(s==='s-kitchen')loadKitchen();
+  if(s==='s-ops')loadOps();
 });
-document.addEventListener('click',function(e){
-  var g=e.target.closest('[data-go]'); if(g)show(g.dataset.go);
-});
-
 document.addEventListener('click',function(e){
   var b=e.target.closest('.btn'); if(!b)return;
   var r=b.getBoundingClientRect(),d=Math.max(r.width,r.height),s=document.createElement('span');
   s.className='rip'; s.style.width=s.style.height=d+'px';
   s.style.left=(e.clientX-r.left-d/2)+'px'; s.style.top=(e.clientY-r.top-d/2)+'px';
-  b.appendChild(s); setTimeout(function(){s.remove()},620);
+  b.appendChild(s); setTimeout(function(){s.remove()},600);
 });
 
-document.getElementById('connect').addEventListener('click',goLive);
-setTimeout(goLive,900);
+/* ---------- live polling ---------- */
+function startPolling(){
+  if(POLL)clearInterval(POLL);
+  if(CURRENT==='s-orders')POLL=setInterval(function(){loadOrders(true)},12000);
+  else if(CURRENT==='s-kitchen')POLL=setInterval(function(){loadKitchen(true)},10000);
+  else if(CURRENT==='s-ops')POLL=setInterval(function(){loadOps(true)},15000);
+  else if(CURRENT==='s-trip')POLL=setInterval(function(){loadStops(true)},30000);
+}
+document.addEventListener('visibilitychange',function(){
+  if(document.hidden){ if(POLL)clearInterval(POLL); } else startPolling();
+});
 
-var PRICES=[280,60,320,190,40];
-function recalc(){
-  var n=0,t=0;
-  document.querySelectorAll('#menulist .qty').forEach(function(q,i){
-    var v=parseInt(q.textContent,10)||0; n+=v; t+=v*PRICES[i];
+/* ---------- route + trip pickers ---------- */
+async function loadRoutes(){
+  var sr=document.getElementById('selroute');
+  try{
+    ST.routes=await API.call('/routes');
+    if(!ST.routes.length){ document.getElementById('stoplist').innerHTML='<div class="empty">No routes yet.</div>'; return; }
+    sr.innerHTML=ST.routes.map(function(r){ return '<option value="'+r.id+'">'+esc(r.origin)+' → '+esc(r.destination)+'</option>'; }).join('');
+    if(!ST.route||!ST.routes.some(function(r){return r.id===ST.route.id}))ST.route=ST.routes[ST.routes.length-1];
+    sr.value=ST.route.id;
+    await loadTrips();
+  }catch(e){
+    document.getElementById('stoplist').innerHTML='<div class="state bad">Could not load routes: '+esc(e.message)+'</div>';
+  }
+}
+document.getElementById('selroute').addEventListener('change',async function(){
+  ST.route=ST.routes.filter(function(r){return r.id==this.value}.bind(this))[0];
+  ST.trip=null; await loadTrips();
+});
+async function loadTrips(){
+  var st=document.getElementById('seltrip');
+  ST.trips=await API.call('/routes/'+ST.route.id+'/trips');
+  if(!ST.trips.length){
+    st.innerHTML='<option>No buses scheduled</option>';
+    document.getElementById('tripband').innerHTML='';
+    document.getElementById('mapbox').innerHTML='';
+    document.getElementById('stoplist').innerHTML='<div class="empty">No buses scheduled on this route yet.</div>';
+    return;
+  }
+  ST.trips.sort(function(a,b){ return new Date(a.departure_time)-new Date(b.departure_time); });
+  var now=Date.now();
+  st.innerHTML=ST.trips.map(function(t){
+    var dep=new Date(t.departure_time).getTime();
+    var gone=dep<now-3*36e5;
+    return '<option value="'+t.id+'">'+esc(t.bus_number)+' · '+hhmm(t.departure_time)+' '+dayLabel(t.departure_time)+
+      (t.current_delay_minutes>0?' · +'+t.current_delay_minutes+'m':'')+(gone?' (departed)':'')+'</option>';
+  }).join('');
+  var upcoming=ST.trips.filter(function(t){ return new Date(t.departure_time).getTime()>now-90*6e4; });
+  if(!ST.trip||!ST.trips.some(function(t){return t.id===ST.trip.id}))ST.trip=upcoming[0]||ST.trips[ST.trips.length-1];
+  st.value=ST.trip.id;
+  await loadStops();
+}
+document.getElementById('seltrip').addEventListener('change',async function(){
+  ST.trip=ST.trips.filter(function(t){return t.id==this.value}.bind(this))[0];
+  ST.stop=null; await loadStops();
+});
+
+/* ---------- stops + map ---------- */
+async function loadStops(silent){
+  var band=document.getElementById('tripband'), list=document.getElementById('stoplist');
+  if(!ST.trip)return;
+  if(!silent)list.innerHTML='<div class="empty"><span class="spin"></span>Loading…</div>';
+  try{
+    var t=ST.trip;
+    band.innerHTML='<div class="band"><h3>'+esc(ST.route.origin)+' → '+esc(ST.route.destination)+'</h3>'+
+      '<div class="meta">'+esc(t.operator)+' · bus '+esc(t.bus_number)+' · departs '+hhmm(t.departure_time)+' '+dayLabel(t.departure_time)+' · '+t.status.replace('_',' ')+'</div>'+
+      (t.current_delay_minutes>0?'<div class="pill-late"><span class="ping"></span>Running '+t.current_delay_minutes+' min late — cut-offs shifted</div>':'')+'</div>';
+    ST.stops=await API.call('/trips/'+t.id+'/upcoming-stops');
+    if(!ST.stops.length){ list.innerHTML='<div class="empty">This bus has completed its route.</div>'; document.getElementById('mapbox').innerHTML=''; return; }
+    drawMap(ST.stops);
+    var firstLive=ST.stops.findIndex(function(s){return s.minutes_until_arrival>=0});
+    list.innerHTML=ST.stops.map(function(s,i){
+      var m=s.minutes_until_arrival, gone=m<0;
+      var tag = gone ? '<span class="tag bad">Passed</span>'
+        : (i===firstLive ? '<span class="tag">Next stop · in '+m+' min</span>'
+          : (s.halt_duration_minutes<=5?'<span class="tag warn">Short halt · '+s.halt_duration_minutes+' min</span>':'<span class="tag">in '+m+' min</span>'));
+      return '<div class="stop'+(i===firstLive?' next':'')+(gone?' gone':'')+'" data-id="'+s.id+'" data-name="'+esc(s.name)+'" data-eta="'+s.eta+'" data-min="'+m+'">'+
+        '<div class="t">'+hhmm(s.eta)+'</div><div><div class="nm">'+esc(s.name)+'</div>'+
+        '<div class="sm">'+s.halt_duration_minutes+' min halt · '+s.minutes_from_origin+' min from origin</div>'+tag+'</div></div>';
+    }).join('');
+    if(!silent)reveal(list);
+  }catch(e){
+    list.innerHTML='<div class="state bad">Could not load stops: '+esc(e.message)+'</div>';
+  }
+}
+function drawMap(stops){
+  var box=document.getElementById('mapbox');
+  var W=1000,H=200,P=60;
+  var lats=stops.map(function(s){return s.lat}), lngs=stops.map(function(s){return s.lng});
+  var minLa=Math.min.apply(null,lats),maxLa=Math.max.apply(null,lats);
+  var minLo=Math.min.apply(null,lngs),maxLo=Math.max.apply(null,lngs);
+  var dLa=(maxLa-minLa)||1, dLo=(maxLo-minLo)||1;
+  var pts=stops.map(function(s){
+    return {
+      x:P+((s.lng-minLo)/dLo)*(W-2*P),
+      y:H/2-((s.lat-minLa)/dLa-0.5)*70,
+      s:s
+    };
   });
-  document.getElementById('cartcount').textContent=n+(n===1?' item':' items');
-  document.getElementById('carttotal').textContent='₹'+t.toLocaleString('en-IN');
+  var firstLive=stops.findIndex(function(s){return s.minutes_until_arrival>=0});
+  var path=pts.map(function(p,i){return (i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)}).join(' ');
+  var donePts=pts.slice(0,Math.max(firstLive,0)+1);
+  var donePath=donePts.length>1?donePts.map(function(p,i){return (i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)}).join(' '):'';
+  var bus=pts[Math.max(firstLive,0)];
+  box.innerHTML='<div class="mapwrap"><h4>Route map</h4><div class="mh">'+stops.length+' stops · '+esc(ST.route.origin)+' → '+esc(ST.route.destination)+'</div>'+
+  '<svg class="rmap" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Route map of upcoming stops">'+
+    '<path class="line" d="'+path+'"/>'+
+    (donePath?'<path class="done" d="'+donePath+'"/>':'')+
+    pts.map(function(p,i){
+      var gone=p.s.minutes_until_arrival<0, next=i===firstLive;
+      var fill=next?'var(--brand)':(gone?'var(--line2)':'#fff');
+      var stroke=next?'var(--brand)':(gone?'var(--line2)':'var(--brand)');
+      return '<g><circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="'+(next?8:6)+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="2.5" data-id="'+p.s.id+'"><title>'+esc(p.s.name)+' · '+hhmm(p.s.eta)+'</title></circle>'+
+        '<text class="nm" x="'+p.x.toFixed(1)+'" y="'+(p.y-18).toFixed(1)+'" text-anchor="middle">'+esc(p.s.name)+'</text>'+
+        '<text x="'+p.x.toFixed(1)+'" y="'+(p.y+26).toFixed(1)+'" text-anchor="middle">'+hhmm(p.s.eta)+'</text></g>';
+    }).join('')+
+    (bus?'<text class="bus" x="'+bus.x.toFixed(1)+'" y="'+(bus.y+5).toFixed(1)+'" text-anchor="middle" font-size="18">🚌</text>':'')+
+  '</svg></div>';
+  box.querySelectorAll('circle').forEach(function(c){
+    c.addEventListener('click',function(){ pickStop(+c.dataset.id); });
+  });
+}
+function pickStop(id){
+  var s=ST.stops.filter(function(x){return x.id===id})[0]; if(!s)return;
+  if(API.user.role!=='passenger'){ toast('Sign in as a passenger to order'); return; }
+  ST.stop={id:s.id,name:s.name,eta:s.eta,min:s.minutes_until_arrival};
+  loadDhabas();
+}
+document.getElementById('stoplist').addEventListener('click',function(e){
+  var s=e.target.closest('.stop'); if(!s)return;
+  pickStop(+s.dataset.id);
+});
+
+/* ---------- dhabas ---------- */
+function needStop(){
+  if(ST.stop)return true;
+  if(ST.stops&&ST.stops.length){
+    var i=ST.stops.findIndex(function(s){return s.minutes_until_arrival>=0});
+    var s=ST.stops[i>-1?i:0];
+    ST.stop={id:s.id,name:s.name,eta:s.eta,min:s.minutes_until_arrival};
+    return true;
+  }
+  document.getElementById('dhabalist').innerHTML='<div class="empty">Pick a stop on the Trip screen first.</div>';
+  document.getElementById('dh-title').textContent='Dhabas'; document.getElementById('dh-sub').textContent='';
+  return false;
+}
+async function loadDhabas(){
+  show('s-dhabas');
+  if(!needStop())return;
+  document.getElementById('dh-title').textContent='Dhabas at '+ST.stop.name;
+  document.getElementById('dh-sub').textContent=ST.stop.min>=0
+    ? 'Bus arrives '+hhmm(ST.stop.eta)+' · in '+ST.stop.min+' min'
+    : 'Bus passed this stop '+Math.abs(ST.stop.min)+' min ago';
+  var el=document.getElementById('dhabalist');
+  el.innerHTML='<div class="empty"><span class="spin"></span>Loading…</div>';
+  try{
+    var ds=await API.call('/stops/'+ST.stop.id+'/dhabas');
+    if(!ds.length){ el.innerHTML='<div class="empty">No dhabas listed at this stop.</div>'; return; }
+    el.innerHTML=ds.map(function(d){
+      var late=ST.stop.min < (d.avg_prep_time_minutes+10);
+      return '<div class="card tap" data-id="'+d.id+'" data-name="'+esc(d.name)+'" data-prep="'+d.avg_prep_time_minutes+'">'+
+        '<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start">'+
+          '<div style="font-family:Outfit;font-size:20px;font-weight:600">'+esc(d.name)+'</div>'+
+          (d.rating?'<div style="color:var(--amber);font-weight:600;font-size:14px;white-space:nowrap">★ '+d.rating+(d.total_reviews?' · '+d.total_reviews:'')+'</div>':'')+
+        '</div>'+
+        (d.ai_summary?'<div style="margin:13px 0;padding:13px 15px;background:var(--paper);border-left:3px solid var(--brand);border-radius:0 10px 10px 0;font-size:15px;font-style:italic">'+esc(d.ai_summary)+'</div>':'<div style="height:10px"></div>')+
+        '<div style="display:flex;justify-content:space-between;font-size:14px;color:var(--muted);margin-bottom:14px"><span>Prep '+d.avg_prep_time_minutes+' min</span>'+
+          (late?'<span style="color:var(--red);font-weight:600">Too late to order</span>':'<span style="color:var(--brand-dk);font-weight:600">Open for orders</span>')+'</div>'+
+        '<button class="btn full'+(late?' ghost':'')+'">'+(late?'View menu':'Order now')+'</button></div>';
+    }).join('');
+    reveal(el);
+  }catch(e){ el.innerHTML='<div class="state bad">Could not load dhabas: '+esc(e.message)+'</div>'; }
+}
+document.getElementById('dhabalist').addEventListener('click',function(e){
+  var c=e.target.closest('.card'); if(!c)return;
+  ST.dhaba={id:+c.dataset.id,name:c.dataset.name,prep:+c.dataset.prep};
+  loadMenu();
+});
+
+/* ---------- menu ---------- */
+function needDhaba(){
+  if(ST.dhaba)return true;
+  document.getElementById('menulist').innerHTML='<div class="empty">Pick a dhaba first.</div>';
+  document.getElementById('mn-title').textContent='Menu';
+  document.getElementById('mn-sub').textContent=''; document.getElementById('cutoff').innerHTML='';
+  document.getElementById('cartcount').textContent='0 items';
+  document.getElementById('carttotal').textContent=money(0);
+  document.getElementById('placeorder').disabled=true;
+  return false;
+}
+async function loadMenu(){
+  show('s-menu');
+  if(!needDhaba())return;
+  ST.cart={};
+  document.getElementById('mn-title').textContent=ST.dhaba.name;
+  document.getElementById('mn-sub').textContent=ST.stop.name+' · prep '+ST.dhaba.prep+' min';
+  var need=ST.dhaba.prep+10, ok=ST.stop.min>=need;
+  document.getElementById('cutoff').innerHTML='<div class="state'+(ok?'':' bad')+'" style="margin-bottom:18px">'+
+    (ok?'Bus arrives in '+ST.stop.min+' min. Kitchen needs '+need+' min — you can order.'
+       :'Bus arrives in '+ST.stop.min+' min but the kitchen needs '+need+' min. The server will refuse this order.')+'</div>';
+  var el=document.getElementById('menulist');
+  el.innerHTML='<div class="empty"><span class="spin"></span>Loading…</div>';
+  try{
+    ST.menu=await API.call('/dhabas/'+ST.dhaba.id+'/menu');
+    ST.menu.forEach(function(m){ ST.menuCache[m.id]=m; });
+    if(!ST.menu.length){ el.innerHTML='<div class="empty">No menu items yet.</div>'; return; }
+    el.innerHTML=ST.menu.map(function(m){
+      return '<div class="row" data-id="'+m.id+'"><div class="veg'+(m.is_veg?'':' non')+'"></div>'+
+        '<div class="body"><div class="nm">'+esc(m.name)+'</div></div>'+
+        '<div class="price">'+money(num(m.price))+'</div>'+
+        '<div class="step"><button data-d="-1">−</button><span class="qty">0</span><button data-d="1">+</button></div></div>';
+    }).join('');
+    reveal(el); recalc();
+  }catch(e){ el.innerHTML='<div class="state bad">Could not load menu: '+esc(e.message)+'</div>'; }
 }
 document.getElementById('menulist').addEventListener('click',function(e){
   var b=e.target.closest('button[data-d]'); if(!b)return;
-  var q=b.parentElement.querySelector('.qty');
-  q.textContent=Math.max(0,(parseInt(q.textContent,10)||0)+parseInt(b.dataset.d,10));
+  var row=b.closest('.row'), id=+row.dataset.id, q=row.querySelector('.qty');
+  var v=Math.max(0,(parseInt(q.textContent,10)||0)+parseInt(b.dataset.d,10));
+  q.textContent=v; if(v)ST.cart[id]=v; else delete ST.cart[id];
   q.classList.remove('bump'); void q.offsetWidth; q.classList.add('bump'); recalc();
 });
-recalc();
-
-var left=462;
-setInterval(function(){
-  if(left<=0)return; left--;
-  var m=Math.floor(left/60),s=left%60;
-  document.getElementById('clock').textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
-},1000);
-
-document.getElementById('chips').addEventListener('click',function(e){
-  var c=e.target.closest('.chip'); if(c)c.classList.toggle('on');
-});
-document.getElementById('q').addEventListener('input',function(){
-  var v=this.value.trim().toLowerCase(),n=0;
-  document.querySelectorAll('#results .card').forEach(function(c){
-    var hit=!v||(c.dataset.n||'').indexOf(v)>-1;
-    c.style.display=hit?'':'none'; if(hit)n++;
-  });
-  document.getElementById('rescount').textContent=n+(n===1?' result':' results');
-});
-
-document.querySelectorAll('.sw').forEach(function(s){
-  s.addEventListener('click',function(){s.classList.toggle('on')});
-});
-
-function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('on');setTimeout(function(){t.classList.remove('on')},2300)}
-function openV(id){document.getElementById(id).classList.add('on')}
-function closeV(){document.querySelectorAll('.veil').forEach(function(v){v.classList.remove('on')})}
-document.querySelectorAll('.veil').forEach(function(v){v.addEventListener('click',function(e){if(e.target===v)closeV()})});
-document.addEventListener('click',function(e){if(e.target.closest('[data-close]'))closeV()});
-
-var seat=document.getElementById('seat');
-seat.addEventListener('input',function(){document.getElementById('f-seat').classList.remove('bad')});
-document.getElementById('place').addEventListener('click',function(){
-  if(!seat.value.trim()){document.getElementById('f-seat').classList.add('bad');seat.focus();return}
-  document.getElementById('seatout').textContent=seat.value.trim(); openV('veil-done');
-});
-document.getElementById('track').addEventListener('click',function(){closeV();show('order')});
-document.getElementById('cancel').addEventListener('click',function(){toast('Cancellation requested')});
-
-function openRate(){openV('veil-rate')}
-document.getElementById('rate-open').addEventListener('click',openRate);
-document.getElementById('rate-open-2').addEventListener('click',openRate);
-var stars=document.querySelectorAll('#rate span');
-stars.forEach(function(s,i){s.addEventListener('click',function(){
-  stars.forEach(function(x,j){x.classList.toggle('on',j<=i)});
-})});
-var rev=document.getElementById('rev');
-rev.addEventListener('input',function(){document.getElementById('f-rev').classList.remove('bad')});
-document.getElementById('sendrev').addEventListener('click',function(){
-  if(!rev.value.trim()){document.getElementById('f-rev').classList.add('bad');rev.focus();return}
-  closeV(); toast('Thanks for the review');
-});
-</script>
-
-<div class="tbtn" id="tbtn">&#127912;</div>
-<div class="tray" id="tray"><h4>Pick a look</h4><div id="swatches"></div></div>
-
-<script>
-var THEMES={
- 'Emerald + azure':{brand:'#0A8A68',bdk:'#077256',accent:'#1E95DB',adk:'#1579B5',asoft:'#E1F0FB',ink:'#14362E',ink2:'#1E4A3E',paper:'#F4F8F6',line:'#DEE9E4',line2:'#BBDCCF',muted:'#5E7A70',onDark:'#C6F0E2'},
- 'Midnight + amber':{brand:'#16213E',bdk:'#1F2C52',accent:'#F0A818',adk:'#D18E0C',asoft:'#FDF0D6',ink:'#16213E',ink2:'#1F2C52',paper:'#F5F6FA',line:'#E3E5EE',line2:'#C7CBDC',muted:'#6B7190',onDark:'#A9B1D0'},
- 'Charcoal + lime':{brand:'#23262B',bdk:'#32363D',accent:'#93C01F',adk:'#7BA216',asoft:'#EDF5D8',ink:'#23262B',ink2:'#32363D',paper:'#F6F7F5',line:'#E4E6E2',line2:'#C8CBC4',muted:'#6E7278',onDark:'#B6BAC2'},
- 'Plum + gold':{brand:'#3A1B3D',bdk:'#4C2650',accent:'#D4A017',adk:'#B5860C',asoft:'#FBF1D8',ink:'#3A1B3D',ink2:'#4C2650',paper:'#FAF6FA',line:'#EDE3EE',line2:'#D6C3D8',muted:'#7A6A7C',onDark:'#C9AECB'},
- 'Ocean + sky':{brand:'#0C3B52',bdk:'#134C68',accent:'#1EA3D8',adk:'#1686B4',asoft:'#DFF1FA',ink:'#0C3B52',ink2:'#134C68',paper:'#F3F8FB',line:'#DCE8EF',line2:'#BCD2DE',muted:'#5E7C8C',onDark:'#A6C7D8'},
- 'Saffron + ink':{brand:'#2C2A26',bdk:'#3D3A34',accent:'#E8761A',adk:'#C75F0D',asoft:'#FDEDDC',ink:'#2C2A26',ink2:'#3D3A34',paper:'#FAF7F2',line:'#EBE5DB',line2:'#D4CBBC',muted:'#75705F',onDark:'#BDB6A6'}
-};
-function applyTheme(name){
-  var t=THEMES[name]; if(!t)return; var r=document.documentElement.style;
-  r.setProperty('--brand',t.brand); r.setProperty('--brand-dk',t.bdk);
-  r.setProperty('--teal',t.accent); r.setProperty('--teal-dk',t.adk); r.setProperty('--teal-soft',t.asoft);
-  r.setProperty('--ink',t.ink); r.setProperty('--ink-2',t.ink2);
-  r.setProperty('--paper',t.paper); r.setProperty('--line',t.line);
-  r.setProperty('--line-2',t.line2); r.setProperty('--muted',t.muted);
-  document.querySelectorAll('.meta,.cd-block .lab,.cartbar .l,.prof .ph').forEach(function(e){e.style.color=t.onDark});
-  try{localStorage.setItem('dg-theme-v3',name)}catch(e){}
+function recalc(){
+  var n=0,t=0;
+  ST.menu.forEach(function(m){ var q=ST.cart[m.id]||0; n+=q; t+=q*num(m.price); });
+  document.getElementById('cartcount').textContent=n+(n===1?' item':' items');
+  document.getElementById('carttotal').textContent=money(t);
+  document.getElementById('placeorder').disabled=!n;
 }
-var sw=document.getElementById('swatches');
-Object.keys(THEMES).forEach(function(n){
-  var t=THEMES[n],d=document.createElement('div'); d.className='sw2';
-  d.innerHTML='<div class="dots"><i style="background:'+t.brand+'"></i><i style="background:'+t.accent+'"></i><i style="background:'+t.paper+';box-shadow:inset 0 0 0 1px #ddd"></i></div><span>'+n+'</span>';
-  d.addEventListener('click',function(){applyTheme(n);document.getElementById('tray').classList.remove('on')});
-  sw.appendChild(d);
+document.getElementById('placeorder').addEventListener('click',async function(){
+  var f=document.getElementById('f-seat'), seat=document.getElementById('seat').value.trim();
+  f.classList.remove('bad');
+  if(!seat){ f.classList.add('bad'); document.getElementById('seat').focus(); return; }
+  var items=Object.keys(ST.cart).map(function(k){return {menu_item_id:+k,quantity:ST.cart[k]}});
+  if(!items.length)return;
+  this.disabled=true;
+  try{
+    var o=await API.call('/orders',{method:'POST',body:{trip_id:ST.trip.id,stop_id:ST.stop.id,dhaba_id:ST.dhaba.id,seat_number:seat,items:items}});
+    toast('Order #'+o.id+' placed — ready before '+hhmm(o.expected_arrival_time));
+    ST.cart={}; show('s-orders'); loadOrders();
+  }catch(e){
+    toast(e.status===409?('Too late: '+e.message):('Order failed: '+e.message),true);
+  }
+  this.disabled=false;
 });
-document.getElementById('tbtn').addEventListener('click',function(){
-  document.getElementById('tray').classList.toggle('on');
+document.getElementById('seat').addEventListener('input',function(){document.getElementById('f-seat').classList.remove('bad')});
+
+/* ---------- orders ---------- */
+function orderCard(o,kitchen){
+  var items=o.items.map(function(i){
+    var m=ST.menuCache[i.menu_item_id];
+    return '<div style="display:flex;justify-content:space-between;font-size:14.5px;padding:3px 0"><span>'+
+      i.quantity+' × '+esc(m?m.name:('Item #'+i.menu_item_id))+'</span><span>'+money(num(i.unit_price)*i.quantity)+'</span></div>';
+  }).join('');
+  var canCancel=(o.status==='placed'||o.status==='accepted');
+  var nextMap={placed:'accepted',accepted:'preparing',preparing:'ready',ready:'picked_up'};
+  var nextLabel={accepted:'Accept',preparing:'Start preparing',ready:'Mark ready',picked_up:'Mark picked up'};
+  var nx=nextMap[o.status];
+  var STEPS=[['placed','Placed','\u0911\u0930\u094d\u0921\u0930'],['accepted','Accepted','\u0938\u094d\u0935\u0940\u0915\u093e\u0930'],['preparing','Preparing','\u092c\u0928 \u0930\u0939\u093e'],['ready','Ready','\u0924\u0948\u092f\u093e\u0930'],['picked_up','Picked up','\u092e\u093f\u0932 \u0917\u092f\u093e']];
+  var ix=STEPS.map(function(x){return x[0]}).indexOf(o.status);
+  var track = o.status==='cancelled'
+    ? '<div class="cancelled-note">Order cancelled \u00b7 <span class="hi">\u0930\u0926\u094d\u0926</span></div>'
+    : '<div class="track">'+STEPS.map(function(x,i){
+        var cls = i<ix?'done':(i===ix?'now':'');
+        return '<div class="tk '+cls+'"><div class="dot">'+(i<ix?'\u2713':(i+1))+'</div>'+
+          '<div class="en">'+x[1]+'<span class="hn">'+x[2]+'</span></div></div>';
+      }).join('')+'</div>'+
+      (o.status==='preparing'?'<div class="nowline"><i></i>Kitchen is cooking your food right now</div>':'')+
+      (o.status==='ready'?'<div class="nowline" style="color:var(--brand-dk)"><i style="background:var(--brand-dk)"></i>Ready for pickup \u2014 collect at the counter</div>':'');
+  return '<div class="card" data-id="'+o.id+'">'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">'+
+      '<div><div style="font-weight:600;font-size:16.5px">Order #'+o.id+(o.seat_number?' · seat '+esc(o.seat_number):'')+'</div>'+
+      '<div style="font-size:14px;color:var(--muted)">Bus arrives '+hhmm(o.expected_arrival_time)+'</div></div>'+
+      '<span class="badge b-'+o.status+'">'+o.status.replace('_',' ')+'</span></div>'+
+    (kitchen?'':track)+'<div style="background:var(--paper);border-radius:10px;padding:12px 14px;margin:13px 0">'+items+'</div>'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px">'+
+      '<span class="price">'+money(num(o.total_amount))+'</span>'+
+      (kitchen?(nx?'<button class="btn sm" data-adv="'+nx+'">'+nextLabel[nx]+'</button>':'<span style="font-size:14px;color:var(--muted)">Done</span>')
+             :(canCancel?'<button class="btn sm ghost" data-cancel="1">Cancel</button>':''))+
+    '</div></div>';
+}
+async function hydrateMenuNames(orders){
+  var ids={};
+  orders.forEach(function(o){ o.items.forEach(function(i){ if(!ST.menuCache[i.menu_item_id])ids[o.dhaba_id]=1; }); });
+  var dids=Object.keys(ids);
+  for(var i=0;i<dids.length;i++){
+    try{ (await API.call('/dhabas/'+dids[i]+'/menu')).forEach(function(m){ ST.menuCache[m.id]=m; }); }catch(e){}
+  }
+}
+async function loadOrders(silent){
+  var el=document.getElementById('orderlist');
+  if(!silent)el.innerHTML='<div class="empty"><span class="spin"></span>Loading…</div>';
+  try{
+    var os=await API.call('/passengers/'+API.user.id+'/orders');
+    if(!os.length){ el.innerHTML='<div class="empty">No orders yet. Pick a stop on the Trip screen.</div>'; return; }
+    await hydrateMenuNames(os);
+    os.sort(function(a,b){return b.id-a.id});
+    var sig=os.map(function(o){return o.id+o.status}).join(',');
+    if(silent&&el._sig===sig)return;
+    el._sig=sig;
+    el.innerHTML=os.map(function(o){return orderCard(o,false)}).join('');
+    if(!silent)reveal(el); else el.querySelectorAll('.card').forEach(function(c){c.classList.add('rv','in')});
+  }catch(e){ el.innerHTML='<div class="state bad">Could not load orders: '+esc(e.message)+'</div>'; }
+}
+document.getElementById('orderlist').addEventListener('click',async function(e){
+  var b=e.target.closest('[data-cancel]'); if(!b)return;
+  var id=b.closest('.card').dataset.id; b.disabled=true;
+  try{ await API.call('/orders/'+id+'/cancel',{method:'PATCH'}); toast('Order #'+id+' cancelled'); loadOrders(); }
+  catch(err){ toast('Cancel failed: '+err.message,true); b.disabled=false; }
 });
-try{var saved=localStorage.getItem('dg-theme-v3'); if(saved)applyTheme(saved);}catch(e){}
+
+/* ---------- kitchen ---------- */
+var KT={filter:'open',orders:[]};
+async function loadKitchen(silent){
+  var el=document.getElementById('kitchenlist');
+  var did=API.user&&API.user.dhaba_id;
+  if(!did){ el.innerHTML='<div class="state bad">This account is not linked to a dhaba.</div>'; return; }
+  if(!silent)el.innerHTML='<div class="empty"><span class="spin"></span>Loading…</div>';
+  try{
+    var os=await API.call('/dhabas/'+did+'/incoming-orders');
+    await hydrateMenuNames(os);
+    var sig=os.map(function(o){return o.id+o.status}).join(',');
+    var changed=el._sig!==sig;
+    if(silent&&!changed)return;
+    if(silent&&el._sig&&os.length>KT.orders.length)toast('New order received');
+    el._sig=sig; KT.orders=os; renderKitchen(silent);
+  }catch(e){ el.innerHTML='<div class="state bad">Could not load queue: '+esc(e.message)+'</div>'; }
+}
+function renderKitchen(silent){
+  var el=document.getElementById('kitchenlist');
+  var os=KT.orders.slice();
+  if(KT.filter==='open')os=os.filter(function(o){return ['placed','accepted','preparing','ready'].indexOf(o.status)>-1});
+  os.sort(function(a,b){return new Date(a.expected_arrival_time)-new Date(b.expected_arrival_time)});
+  document.getElementById('kt-sub').textContent=os.length+' order'+(os.length===1?'':'s')+' · sorted by bus arrival';
+  el.innerHTML=os.length?os.map(function(o){return orderCard(o,true)}).join(''):'<div class="empty">Nothing in the queue.</div>';
+  if(!silent)reveal(el); else el.querySelectorAll('.card').forEach(function(c){c.classList.add('rv','in')});
+}
+document.getElementById('ktfilter').addEventListener('click',function(e){
+  var c=e.target.closest('.chip'); if(!c)return;
+  document.querySelectorAll('#ktfilter .chip').forEach(function(x){x.classList.remove('on')});
+  c.classList.add('on'); KT.filter=c.dataset.f; renderKitchen();
+});
+document.getElementById('kitchenlist').addEventListener('click',async function(e){
+  var b=e.target.closest('[data-adv]'); if(!b)return;
+  var id=b.closest('.card').dataset.id, st=b.dataset.adv; b.disabled=true;
+  try{ await API.call('/orders/'+id+'/status',{method:'PATCH',body:{status:st}}); toast('Order #'+id+' → '+st.replace('_',' ')); loadKitchen(); }
+  catch(err){ toast('Update failed: '+err.message,true); b.disabled=false; }
+});
+
+/* ---------- ops ---------- */
+async function loadOps(silent){
+  var kp=document.getElementById('opskpis'), tr=document.getElementById('opstrips');
+  if(!silent)tr.innerHTML='<div class="empty"><span class="spin"></span>Loading…</div>';
+  try{
+    var routes=await API.call('/routes'), all=[];
+    for(var i=0;i<routes.length;i++){
+      var ts=await API.call('/routes/'+routes[i].id+'/trips');
+      ts.forEach(function(t){ t._route=routes[i]; all.push(t); });
+    }
+    var active=all.filter(function(t){return t.status==='in_transit'||t.status==='scheduled'});
+    var late=all.filter(function(t){return t.current_delay_minutes>0});
+    kp.innerHTML=[['Routes',routes.length,''],['Buses',all.length,''],['Active',active.length,''],['Delayed',late.length,'']]
+      .map(function(k){return '<div class="kpi"><div class="lab">'+k[0]+'</div><div class="num">'+k[1]+'<span>'+k[2]+'</span></div></div>'}).join('');
+    if(!all.length){ tr.innerHTML='<div class="empty">No trips.</div>'; return; }
+    all.sort(function(a,b){return new Date(a.departure_time)-new Date(b.departure_time)});
+    var sig=all.map(function(t){return t.id+'-'+t.current_delay_minutes+t.status}).join(',');
+    if(silent&&tr._sig===sig)return;
+    tr._sig=sig;
+    tr.innerHTML=all.map(function(t){
+      return '<div class="card" data-id="'+t.id+'">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">'+
+          '<div><div style="font-weight:600;font-size:16.5px">'+esc(t.bus_number)+' · '+esc(t._route.origin)+' → '+esc(t._route.destination)+'</div>'+
+          '<div style="font-size:14px;color:var(--muted)">'+esc(t.operator)+' · departs '+hhmm(t.departure_time)+' '+dayLabel(t.departure_time)+' · '+t.status.replace('_',' ')+'</div></div>'+
+          '<span class="badge '+(t.current_delay_minutes>0?'b-cancelled':'b-ready')+'">'+(t.current_delay_minutes>0?'+'+t.current_delay_minutes+' min':'On time')+'</span></div>'+
+        '<div style="display:flex;gap:9px;align-items:center;margin-top:14px;flex-wrap:wrap">'+
+          '<input type="number" value="'+t.current_delay_minutes+'" min="0" style="width:92px;padding:9px 12px;border:1px solid var(--line2);border-radius:9px">'+
+          '<button class="btn sm" data-delay="1">Set delay</button>'+
+          '<span style="font-size:13.5px;color:var(--muted)">updates every open order’s arrival time</span>'+
+        '</div></div>';
+    }).join('');
+    if(!silent)reveal(tr); else tr.querySelectorAll('.card').forEach(function(c){c.classList.add('rv','in')});
+  }catch(e){ tr.innerHTML='<div class="state bad">Could not load operations: '+esc(e.message)+'</div>'; }
+}
+document.getElementById('opstrips').addEventListener('click',async function(e){
+  var b=e.target.closest('[data-delay]'); if(!b)return;
+  var card=b.closest('.card'), id=card.dataset.id, v=parseInt(card.querySelector('input').value,10);
+  if(isNaN(v)||v<0){ toast('Enter a delay in minutes',true); return; }
+  b.disabled=true;
+  try{ await API.call('/trips/'+id+'/delay',{method:'PATCH',body:{current_delay_minutes:v}}); toast('Bus delay set to '+v+' min — cut-offs updated'); loadOps(); }
+  catch(err){ toast('Update failed: '+err.message,true); b.disabled=false; }
+});
+
+/* ---------- auth ---------- */
+document.getElementById('authtabs').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(!b)return;
+  document.querySelectorAll('#authtabs button').forEach(function(x){x.classList.remove('on')});
+  b.classList.add('on');
+  document.getElementById('pane-in').style.display=b.dataset.t==='in'?'':'none';
+  document.getElementById('pane-up').style.display=b.dataset.t==='up'?'':'none';
+});
+document.getElementById('demos').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(!b)return;
+  document.getElementById('phone').value=b.dataset.p;
+  document.getElementById('pw').value='password123';
+  document.getElementById('signin').click();
+});
+async function enter(){
+  document.getElementById('urole').textContent=LABEL[API.user.role]||API.user.role;
+  document.getElementById('uname').textContent=API.user.name;
+  document.getElementById('gate').classList.add('off');
+  buildNav(API.user.role);
+  var first=(NAV[API.user.role]||NAV.passenger)[0][0];
+  show(first);
+  if(API.user.role==='dhaba')loadKitchen();
+  else if(API.user.role==='admin')loadOps();
+  else await loadRoutes();
+}
+document.getElementById('signin').addEventListener('click',async function(){
+  var fp=document.getElementById('f-phone'), fw=document.getElementById('f-pw');
+  fp.classList.remove('bad'); fw.classList.remove('bad');
+  var phone=document.getElementById('phone').value.trim(), pw=document.getElementById('pw').value;
+  if(!phone){ fp.classList.add('bad'); return; }
+  if(!pw){ document.getElementById('pwerr').textContent='Enter your password'; fw.classList.add('bad'); return; }
+  this.disabled=true;
+  try{ await API.login(phone,pw); await enter(); }
+  catch(e){ document.getElementById('pwerr').textContent='Sign in failed: '+e.message; fw.classList.add('bad'); }
+  this.disabled=false;
+});
+document.getElementById('signup').addEventListener('click',async function(){
+  var fn=document.getElementById('f-sname'), fp=document.getElementById('f-sphone'), fw=document.getElementById('f-spw');
+  [fn,fp,fw].forEach(function(f){f.classList.remove('bad')});
+  var name=document.getElementById('sname').value.trim();
+  var phone=document.getElementById('sphone').value.trim();
+  var pw=document.getElementById('spw').value;
+  if(!name){ fn.classList.add('bad'); return; }
+  if(phone.length<10||phone.length>15){ fp.classList.add('bad'); return; }
+  if(pw.length<6){ document.getElementById('spwerr').textContent='At least 6 characters'; fw.classList.add('bad'); return; }
+  this.disabled=true;
+  try{ await API.signup(phone,name,pw); toast('Welcome, '+name); await enter(); }
+  catch(e){ document.getElementById('spwerr').textContent=e.message; fw.classList.add('bad'); }
+  this.disabled=false;
+});
+['pw','phone'].forEach(function(id){
+  document.getElementById(id).addEventListener('keydown',function(e){ if(e.key==='Enter')document.getElementById('signin').click(); });
+});
+document.getElementById('spw').addEventListener('keydown',function(e){ if(e.key==='Enter')document.getElementById('signup').click(); });
+document.getElementById('signout').addEventListener('click',function(){
+  if(POLL)clearInterval(POLL);
+  API.token=null; API.user=null;
+  ST={routes:[],route:null,trips:[],trip:null,stops:[],stop:null,dhaba:null,menu:[],cart:{},menuCache:{}};
+  document.getElementById('gate').classList.remove('off');
+});
 </script>
 </body>
 </html>
