@@ -10,7 +10,7 @@ from app.routers import admin, auth, dhabas, passengers, trips
 logger = logging.getLogger(__name__)
 
 # Resolved from this file rather than the CWD so the mount works the same under
-# `uvicorn app.main:app` and the Vercel serverless handler (api/index.py).
+# `uvicorn app.main:app` and the Vercel serverless function.
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 app = FastAPI(
