@@ -1,0 +1,15 @@
+# Tests and local tooling
+tests/
+.pytest_cache/
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Local SQLite databases
+*.db
+
+# Local secrets — set env vars in the Vercel dashboard instead
+.env
+
+# alembic/versions/ is intentionally NOT ignored: migrations must ship.

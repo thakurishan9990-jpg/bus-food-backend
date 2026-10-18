@@ -1,8 +1,14 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.routers import admin, auth, dhabas, passengers, trips
+
+# Resolved from this file rather than the CWD so the mount works the same under
+# `uvicorn app.main:app` and the Vercel serverless handler (api/index.py).
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 app = FastAPI(
     title="Bus Food Pre-Ordering API",
@@ -34,4 +40,4 @@ def health_check() -> dict:
 # Mounted last: Starlette matches routes in registration order, so every API
 # route above is still checked first. This only serves static/index.html for
 # "/" and other unmatched paths once nothing above has claimed them.
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
