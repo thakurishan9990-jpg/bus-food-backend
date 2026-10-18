@@ -1,95 +1,150 @@
-# Bus Food Pre-Ordering — Backend
+# DhabaGo
 
-Pre-order food from real highway dhabas at upcoming bus stops, for intercity buses in India.
-No frontend yet — **FastAPI's `/docs` (Swagger UI) is the demo.**
+Pre-order food from highway dhabas at bus stops your bus hasn't reached yet.
+
+**Live:** https://bus-food-backend.vercel.app
+**API docs:** https://bus-food-backend.vercel.app/docs
+
+---
+
+## The problem
+
+Rail passengers in India have had catering since IRCTC e-catering launched — enter a PNR, pick a station ahead, food arrives at your seat. Intercity bus passengers have nothing. The driver picks the dhaba, nobody knows which one until the bus stops, and forty people order at a counter that starts cooking from zero.
+
+A typical halt on NH-334 is 20 minutes. A butter chicken takes 18 minutes to cook. The two numbers never overlapped, because the kitchen only learned about the order when the bus was already parked.
+
+DhabaGo closes that gap: it knows when the bus will reach each stop and how long each kitchen needs, and places the order at the moment that makes the food ready as the bus pulls in.
+
+---
+
+## How it works
+
+Two calculations carry the whole system.
+
+**Arrival time at a stop**
+
+```
+ETA = trip.departure_time + stop.minutes_from_origin + trip.current_delay_minutes
+```
+
+**Whether the kitchen can still make it**
+
+```
+(ETA − now) >= dhaba.avg_prep_time_minutes + 10 minute buffer
+```
+
+An order that fails the second check is refused by the API with `409` and a readable reason — *"bus arrives in 0 min but prep needs 25 min"*. The cut-off is enforced server-side, not hidden in the interface.
+
+**Delay propagation.** Buses do not run to the minute. When an operator reports a delay, `PATCH /trips/{id}/delay` recalculates `expected_arrival_time` on every open order for that trip, so each kitchen's deadline moves and stops that had closed for ordering reopen. One request, every affected passenger and kitchen updated.
+
+**AI review summaries.** A passenger has about ninety seconds to choose a dhaba and will not read 287 Google reviews. Dhaba listings pull rating and review text from the Google Places API, condense them to one line with Gemini, and cache the result for 24 hours. The ordering path never blocks on a third-party API, and a failed call falls back to the last good summary.
+
+---
+
+## Three roles, three dashboards
+
+| Role | Sees |
+|---|---|
+| **Passenger** | Route map with live ETAs, dhabas with ratings and AI summaries, menu, cart, seat number, live order tracker |
+| **Dhaba manager** | Incoming queue sorted by bus arrival, status advancement, menu and availability editing |
+| **Admin** | Every route, bus and trip; delay reporting; trip scheduling; CRUD over routes, stops, dhabas and menu items |
+
+Role comes from the JWT. The interface hides what a role cannot use, and the API returns `403` regardless — tested both ways.
+
+---
 
 ## Stack
 
-Python 3.11+, FastAPI, SQLAlchemy 2.0, Alembic, Pydantic v2, PostgreSQL, JWT auth
-(python-jose + passlib), Google Places API, Gemini API, pytest.
+Python 3.11 · FastAPI · SQLAlchemy 2.0 · Alembic · Pydantic v2 · PostgreSQL (Neon) · JWT via python-jose and passlib · pytest · Google Places API · Gemini API
 
-## Setup
+Frontend is a single self-contained HTML page served by the same app, so there is one origin and no build step.
+
+Deployed on Vercel as serverless functions with `NullPool`, since a serverless invocation must not hold a pooled connection.
+
+---
+
+## Running it locally
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
+git clone https://github.com/thakurishan9990-jpg/bus-food-backend
+cd bus-food-backend
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-cp .env.example .env
-# Fill in GOOGLE_PLACES_API_KEY and GEMINI_API_KEY if you want live reviews.
-# Without them, dhaba listings still work — ai_summary/rating just come back null/fallback.
-
-docker-compose up -d db
+cp .env.example .env          # defaults to SQLite; set DATABASE_URL for Postgres
 alembic upgrade head
-
 python -m scripts.seed
-# Optional, needs GOOGLE_PLACES_API_KEY: python -m scripts.fetch_place_ids
 
 uvicorn app.main:app --reload
 ```
 
-Open **http://localhost:8000/docs**.
+Open http://localhost:8000 for the app, `/docs` for the API.
 
-Run tests any time with:
+**Demo accounts** — password `password123`:
+
+| Role | Phone |
+|---|---|
+| Passenger | `9876543210` |
+| Dhaba manager | `9876543211` |
+
+The admin account's password comes from the `ADMIN_PASSWORD` environment variable at seed time; if unset, the seed generates one and prints it.
+
+**Seed data** is the Delhi ISBT Kashmere Gate → Dehradun ISBT corridor on NH-334: five stops (Meerut, Khatauli, Muzaffarnagar, Roorkee, Chhutmalpur) with real coordinates, halt durations and distances, plus dhabas and menus. The seed is idempotent — re-running it updates rather than duplicates — and schedules a week of departures so the demo never goes stale.
+
+---
+
+## Tests
+
 ```bash
 pytest
 ```
 
-## Seeded demo data
+77 tests covering ETA calculation, the order cut-off, the status machine, role guards, idempotent seeding, and the admin password path. SQLite in-memory, `respx` for the external APIs.
 
-Route: Delhi ISBT Kashmere Gate → Dehradun ISBT (NH-334), with 5 stops (Meerut, Khatauli,
-Muzaffarnagar, Roorkee, Chhutmalpur), 2-3 dhabas per stop, 3-5 menu items each, and one
-active trip (`UP15-AB-1234`) departing "now" at seed time.
+---
 
-Three demo accounts (all share the password from `SEED_USER_PASSWORD` in `.env`, default `password123`):
+## API
 
-| Role | Phone | Name |
-|---|---|---|
-| passenger | 9876543210 | Amit |
-| dhaba | 9876543211 | Rajesh (staff at Sharma Dhaba, Meerut) |
-| admin | 9876543212 | Admin |
+| Endpoint | Role |
+|---|---|
+| `POST /auth/signup` · `POST /auth/login` | public |
+| `GET /routes` · `/routes/{id}/trips` · `/trips/{id}/upcoming-stops` | any authenticated |
+| `GET /stops/{id}/dhabas` · `/dhabas/{id}/menu` | any authenticated |
+| `POST /orders` · `PATCH /orders/{id}/cancel` | passenger (own) |
+| `GET /dhabas/{id}/incoming-orders` · `PATCH /orders/{id}/status` | dhaba (own) |
+| `PATCH /trips/{id}/delay` · `/last-passed-stop` | admin |
+| `POST/PATCH/DELETE /admin/{routes,stops,dhabas,trips,menu-items}` | admin |
 
-## `/docs` walkthrough
+Full interactive documentation at `/docs`.
 
-Swagger's lock-icon **Authorize** button accepts a phone number as "username" — this lets
-you log in as all three roles side by side without leaving the page.
+---
 
-1. **Authorize as passenger** — `Authorize` → username `9876543210`, password `password123`.
-   (Or try `POST /auth/signup` with a new phone number instead — it also returns a token.)
-2. `GET /routes` — note the route id.
-3. `GET /routes/{route_id}/trips` — note the trip id (`UP15-AB-1234`).
-4. `GET /trips/{trip_id}/upcoming-stops` — see ETAs for every stop ahead of the bus.
-5. `GET /stops/{stop_id}/dhabas` — dhabas at a stop, with rating + AI summary (or fallback
-   text if API keys aren't set).
-6. `GET /dhabas/{dhaba_id}/menu` — note a `menu_item_id`.
-7. `POST /orders` — place an order with `trip_id`, `stop_id`, `dhaba_id`, and
-   `items: [{menu_item_id, quantity}]`. If the bus is too close to that stop relative to the
-   dhaba's prep time, this returns `409` with a message like
-   *"Too late to order, bus arrives in 8 min but prep needs 20 min"*.
-8. `GET /passengers/{passenger_id}/orders` — see your order (use your own user id — a
-   passenger can't view anyone else's).
-9. `PATCH /orders/{order_id}/cancel` — works while `placed`/`accepted`, 409s after.
+## Project structure
 
-10. **Re-authorize as dhaba staff** — username `9876543211`, password `password123`.
-11. `GET /dhabas/{dhaba_id}/incoming-orders` — orders for Rajesh's own dhaba only
-    (another dhaba's id returns 403).
-12. `PATCH /orders/{order_id}/status` — advance one step at a time:
-    `placed → accepted → preparing → ready → picked_up`. Skipping a step returns 400.
+```
+app/
+  main.py  config.py  database.py
+  models/      Route Stop Trip Dhaba MenuItem ReviewCache User Order OrderItem
+  schemas/     Pydantic request and response models
+  routers/     auth  passengers  dhabas  trips  admin
+  services/    eta_service  order_service  places_service  gemini_service
+  utils/       auth  security  errors
+alembic/       migrations
+scripts/       seed.py  fetch_place_ids.py
+static/        index.html — the whole frontend
+tests/
+```
 
-13. **Re-authorize as admin** — username `9876543212`, password `password123`.
-14. `PATCH /trips/{trip_id}/delay` with `{"current_delay_minutes": 20}` — every active
-    order's `expected_arrival_time` shifts accordingly (check step 8's endpoint again).
-15. `PATCH /trips/{trip_id}/last-passed-stop`, and the `/admin/*` CRUD endpoints for
-    routes/stops/dhabas/menu-items.
+---
 
-## Design notes
+## What is not built
 
-- **Passenger = User.** There's no separate `Passenger` table — a passenger is just a
-  `User` with `role=passenger`. `Order.passenger_id` points at `users.id`.
-- **Price snapshotting.** `OrderItem.unit_price` is copied from `MenuItem.price` at order
-  time, so a later menu price change never rewrites history.
-- **Review cache.** Served if `fetched_at` is <24h old; otherwise refreshed via Google
-  Places → Gemini → upserted. Any API failure falls back to the existing cache row, or a
-  static message if there's never been one — this path never hard-errors.
-- **Trip/stop management is admin-only.** The RBAC spec defines passenger/dhaba/admin —
-  there's no separate "operator" role, so `PATCH /trips/{id}/delay` and
-  `PATCH /trips/{id}/last-passed-stop` require `role=admin`.
+- **No payment gateway.** Orders are placed, not paid for.
+- **Bus position is operator-reported**, not GPS. ETAs come from a timetable plus a reported delay rather than live location.
+- **Prep times are static** per dhaba, not learned from order history.
+
+All three are deliberate scope cuts, and each is the obvious next piece of work.
+
+---
+
+Built by [Ishan Singh](https://github.com/thakurishan9990-jpg) — BCA (AI & Data Science), Graphic Era Deemed to be University, Dehradun.
