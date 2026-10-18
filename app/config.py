@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60 * 24 * 7  # 7 days
 
     seed_user_password: str = "password123"
+    # Admin seed password. Empty -> scripts/seed.py generates and prints a random one.
+    admin_password: str = ""
 
     google_places_api_key: str = ""
     gemini_api_key: str = ""

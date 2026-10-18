@@ -6,6 +6,7 @@ of duplicating them, so this is safe to run repeatedly (e.g. on every deploy).
 Usage:
     python -m scripts.seed
 """
+import secrets
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -231,11 +232,14 @@ def seed(db: Session | None = None) -> None:
                 for item_name, price, is_veg in menu_items:
                     _get_or_create_menu_item(db, dhaba, item_name, price, is_veg)
 
+        # Passenger/dhaba keep the shared demo password so the frontend's demo
+        # chips work; admin uses ADMIN_PASSWORD, or a fresh random one if unset.
+        admin_password = settings.admin_password or secrets.token_urlsafe(12)
         for phone, name, role, dhaba_name in SEED_USERS:
             _get_or_create_user(
                 db, phone, name, role,
                 dhaba_by_name[dhaba_name].id if dhaba_name else None,
-                settings.seed_user_password,
+                admin_password if role == UserRole.ADMIN else settings.seed_user_password,
             )
 
         now_ist = datetime.now(IST)
@@ -259,9 +263,15 @@ def seed(db: Session | None = None) -> None:
         print("Seed complete:")
         print(f"  Route: {route.name} (id={route.id})")
         print(f"  Trips: {len(trips_created)} departures across {DAYS_AHEAD} days")
-        print(f"  Demo users (password='{settings.seed_user_password}'):")
+        print(f"  Demo users (password='{settings.seed_user_password}' unless noted):")
         for phone, name, role, _ in SEED_USERS:
-            print(f"    {role.value}: phone={phone} name={name}")
+            line = f"    {role.value}: phone={phone} name={name}"
+            if role == UserRole.ADMIN:
+                if settings.admin_password:
+                    line += " password=<from ADMIN_PASSWORD>"
+                else:
+                    line += f" password='{admin_password}' (generated; set ADMIN_PASSWORD to choose one)"
+            print(line)
     finally:
         if owns_session:
             db.close()
