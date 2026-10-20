@@ -63,7 +63,8 @@ def test_login_unknown_phone_rejected(client):
 # ---- RBAC ----
 
 def test_missing_token_rejected(client):
-    resp = client.get("/routes")
+    # Passenger browsing (e.g. /routes) is public; role-gated endpoints still need a token.
+    resp = client.get("/kitchen/orders")
     assert resp.status_code == 401
 
 
@@ -94,7 +95,7 @@ def test_admin_can_access_admin_routes(client, db_session):
 
 def test_dhaba_staff_cannot_access_other_dhabas_orders(client, db_session, seeded_route_and_dhaba):
     _, stop, dhaba = seeded_route_and_dhaba
-    other_dhaba = Dhaba(stop_id=stop.id, name="Other Dhaba", avg_prep_time_minutes=10, is_active=True)
+    other_dhaba = Dhaba(stop_id=stop.id, name="Other Dhaba", avg_prep_time_minutes=10)
     db_session.add(other_dhaba)
     db_session.commit()
 

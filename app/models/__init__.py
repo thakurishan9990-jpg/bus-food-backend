@@ -1,4 +1,6 @@
-from app.models.dhaba import Dhaba, MenuItem
+from app.models.ad_campaign import AdArt, AdCampaign, AdPlacement, AdStatus
+from app.models.bus import Bus
+from app.models.dhaba import Dhaba, DhabaStatus, MenuItem
 from app.models.order import Order, OrderItem, OrderStatus
 from app.models.review_cache import ReviewCache
 from app.models.route import Route
@@ -11,7 +13,9 @@ __all__ = [
     "Stop",
     "Trip",
     "TripStatus",
+    "Bus",
     "Dhaba",
+    "DhabaStatus",
     "MenuItem",
     "ReviewCache",
     "User",
@@ -19,4 +23,8 @@ __all__ = [
     "Order",
     "OrderItem",
     "OrderStatus",
+    "AdCampaign",
+    "AdPlacement",
+    "AdStatus",
+    "AdArt",
 ]

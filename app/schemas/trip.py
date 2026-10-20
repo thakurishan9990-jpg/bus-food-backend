@@ -28,6 +28,7 @@ class TripRead(TripBase):
 
     id: int
     route_id: int
+    bus_id: int | None
     current_delay_minutes: int
     last_passed_stop_id: int | None
     status: TripStatus

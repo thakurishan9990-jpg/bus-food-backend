@@ -10,7 +10,7 @@ from app.services.eta_service import recalculate_order_etas
 from app.utils.errors import BadRequestError, NotFoundError
 from app.utils.security import require_role
 
-router = APIRouter(prefix="/trips", tags=["trips"])
+router = APIRouter(prefix="/trips", tags=["admin"])
 
 
 @router.patch("/{trip_id}/delay", response_model=TripRead)

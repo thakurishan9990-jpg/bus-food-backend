@@ -1,27 +1,33 @@
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
-from app.models.dhaba import Dhaba, MenuItem
+from app.models.dhaba import Dhaba
 from app.models.order import Order
 from app.models.route import Route
 from app.models.stop import Stop
 from app.models.trip import Trip, TripStatus
 from app.models.user import User, UserRole
-from app.schemas.dhaba import DhabaWithReviews, MenuItemRead
+from app.config import settings
+from app.schemas.catalog import AppConfig, DhabaListing, DhabaMenu, MenuCounts, MenuItemListing, RouteSummary
 from app.schemas.order import OrderCreate, OrderRead
-from app.schemas.route import RouteRead
 from app.schemas.stop import StopRead, UpcomingStop
 from app.schemas.trip import TripRead
 from app.schemas.user import UserRead
 from app.services import order_service, places_service
+from app.services.catalog_service import (
+    CUISINE_LABELS, Diet, dhabas_with_menus, is_live, listed_routes, shown_for_diet, sponsored_first, visible_items,
+)
 from app.services.eta_service import compute_eta, minutes_until
+from app.services.listing_service import ad_item, addon_for, dhaba_listing, route_summary
 from app.utils.errors import ForbiddenError, NotFoundError
 from app.utils.security import get_current_user, require_role
 
-router = APIRouter(tags=["passengers"])
+router = APIRouter(tags=["passenger"])
+
+DietQuery = Query("all", description="all, veg or nonveg")
 
 
 @router.get("/me", response_model=UserRead)
@@ -30,10 +36,27 @@ def get_me(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 
-@router.get("/routes", response_model=list[RouteRead])
-def list_routes(db: Session = Depends(get_db), _: User = Depends(get_current_user)) -> list[Route]:
-    """List all bus routes."""
-    return db.query(Route).all()
+@router.get("/config", response_model=AppConfig)
+def get_config() -> AppConfig:
+    """Values the passenger app shows before the server prices an order. Public."""
+    return AppConfig(
+        convenience_fee_inr=settings.convenience_fee_inr,
+        order_cutoff_buffer_minutes=settings.order_cutoff_buffer_minutes,
+        ready_before_arrival_minutes=settings.ready_before_arrival_minutes,
+        cuisines=CUISINE_LABELS,
+    )
+
+
+@router.get("/routes", response_model=list[RouteSummary])
+def list_routes(db: Session = Depends(get_db)) -> list[RouteSummary]:
+    """Bus routes passengers can browse, with active bus, stop and live dhaba counts. Public."""
+    routes = (
+        listed_routes(db)
+        .options(selectinload(Route.buses), selectinload(Route.stops).selectinload(Stop.dhabas))
+        .order_by(Route.id)
+        .all()
+    )
+    return [route_summary(route) for route in routes]
 
 
 @router.get("/routes/{route_id}/trips", response_model=list[TripRead])
@@ -47,10 +70,8 @@ def list_trips_for_route(
 
 
 @router.get("/routes/{route_id}/stops", response_model=list[StopRead])
-def list_stops_for_route(
-    route_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)
-) -> list[Stop]:
-    """List every stop on a route, in sequence order (for drawing a full route map)."""
+def list_stops_for_route(route_id: int, db: Session = Depends(get_db)) -> list[Stop]:
+    """List every stop on a route, in sequence order (for drawing a full route map). Public."""
     if db.get(Route, route_id) is None:
         raise NotFoundError(f"Route {route_id} not found")
     return db.query(Stop).filter(Stop.route_id == route_id).order_by(Stop.sequence_order).all()
@@ -99,43 +120,57 @@ def upcoming_stops(
     return upcoming
 
 
-@router.get("/stops/{stop_id}/dhabas", response_model=list[DhabaWithReviews])
-def list_dhabas_at_stop(
-    stop_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)
-) -> list[DhabaWithReviews]:
-    """Dhabas at a stop, enriched with Google rating + AI-summarized reviews."""
+@router.get("/stops/{stop_id}/dhabas", response_model=list[DhabaListing])
+def list_dhabas_at_stop(stop_id: int, diet: Diet = DietQuery, db: Session = Depends(get_db)) -> list[DhabaListing]:
+    """Active dhabas at a stop that serve the chosen diet, sponsored first, then by rating. Public.
+
+    Dhabas with a Google place id show their cached Google rating and AI review summary.
+    """
     if db.get(Stop, stop_id) is None:
         raise NotFoundError(f"Stop {stop_id} not found")
 
-    dhabas = db.query(Dhaba).filter(Dhaba.stop_id == stop_id, Dhaba.is_active.is_(True)).all()
-
-    results = []
-    for dhaba in dhabas:
-        cache = places_service.get_or_refresh_reviews(db, dhaba)
-        results.append(
-            DhabaWithReviews(
-                id=dhaba.id,
-                stop_id=dhaba.stop_id,
-                name=dhaba.name,
-                google_place_id=dhaba.google_place_id,
-                avg_prep_time_minutes=dhaba.avg_prep_time_minutes,
-                is_active=dhaba.is_active,
-                rating=cache.rating if cache else None,
-                total_reviews=cache.total_reviews if cache else None,
-                ai_summary=cache.ai_summary if cache else None,
-            )
-        )
-    return results
+    dhabas = dhabas_with_menus(db).filter(Dhaba.stop_id == stop_id).all()
+    shown = sponsored_first([d for d in dhabas if is_live(d) and shown_for_diet(d, diet)])
+    return [
+        dhaba_listing(d, diet, places_service.get_or_refresh_reviews(db, d) if d.google_place_id else None)
+        for d in shown
+    ]
 
 
-@router.get("/dhabas/{dhaba_id}/menu", response_model=list[MenuItemRead])
-def get_dhaba_menu(
-    dhaba_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)
-) -> list[MenuItem]:
-    """List menu items for a dhaba."""
-    if db.get(Dhaba, dhaba_id) is None:
-        raise NotFoundError(f"Dhaba {dhaba_id} not found")
-    return db.query(MenuItem).filter(MenuItem.dhaba_id == dhaba_id).all()
+def _get_live_dhaba(db: Session, dhaba_ref: str) -> Dhaba:
+    """A live dhaba by slug, or by numeric id for older clients."""
+    query = dhabas_with_menus(db)
+    dhaba = (
+        query.filter(Dhaba.id == int(dhaba_ref)) if dhaba_ref.isdigit() else query.filter(Dhaba.slug == dhaba_ref)
+    ).first()
+    if dhaba is None or not is_live(dhaba):
+        raise NotFoundError(f"Dhaba {dhaba_ref} not found")
+    return dhaba
+
+
+@router.get("/dhabas/{dhaba_ref}/menu", response_model=DhabaMenu)
+def get_dhaba_menu(dhaba_ref: str, diet: Diet = DietQuery, db: Session = Depends(get_db)) -> DhabaMenu:
+    """A dhaba's available items for the diet, chip counts, and one menu add-on. Public.
+
+    `dhaba_ref` is the dhaba's slug (or its numeric id). When the diet leaves nothing,
+    `empty_reason` says why: `pure_veg` (non-veg asked of a pure-veg dhaba) or `no_veg`.
+    """
+    dhaba = _get_live_dhaba(db, dhaba_ref)
+    items = visible_items(dhaba, diet)
+    empty_reason = None
+    if not items and diet == "nonveg" and dhaba.is_pure_veg:
+        empty_reason = "pure_veg"
+    elif not items and diet == "veg":
+        empty_reason = "no_veg"
+    addon = addon_for(db, dhaba)
+    return DhabaMenu(
+        dhaba=dhaba_listing(dhaba, diet),
+        diet=diet,
+        items=[MenuItemListing.model_validate(m) for m in items],
+        counts=MenuCounts(**{d: len(visible_items(dhaba, d)) for d in ("all", "veg", "nonveg")}),
+        empty_reason=empty_reason,
+        addon=ad_item(addon) if addon else None,
+    )
 
 
 @router.post("/orders", response_model=OrderRead, status_code=201)
@@ -144,7 +179,12 @@ def place_order(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.PASSENGER)),
 ) -> Order:
-    """Place an order. Validates the order cutoff (prep time + arrival buffer)."""
+    """Place an order (passengers only). Seat number required; one dhaba per order.
+
+    Give the bus by `bus_number` (or a `trip_id`). Totals are computed here from
+    menu and add-on prices; any prices the client sends are ignored. Refused with
+    409 once the stop's order cut-off has passed.
+    """
     return order_service.create_order(db, current_user, payload)
 
 

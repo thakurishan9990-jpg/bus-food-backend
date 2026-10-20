@@ -5,8 +5,8 @@ from pydantic import BaseModel, ConfigDict
 
 class StopBase(BaseModel):
     name: str
-    lat: float
-    lng: float
+    lat: float | None = None
+    lng: float | None = None
     sequence_order: int
     minutes_from_origin: int
     halt_duration_minutes: int

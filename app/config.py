@@ -24,13 +24,26 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60 * 24 * 7  # 7 days
 
     seed_user_password: str = "password123"
-    # Admin seed password. Empty -> scripts/seed.py generates and prints a random one.
+    # The seeded admin account. Empty password -> scripts/seed.py generates and prints a random one.
+    admin_phone: str = "9000000001"
+    admin_name: str = "DhabaGo Admin"
     admin_password: str = ""
 
     google_places_api_key: str = ""
     gemini_api_key: str = ""
 
     order_cutoff_buffer_minutes: int = 10
+    # Kitchens aim to have food ready this long before the bus pulls in.
+    ready_before_arrival_minutes: int = 6
+
+    # Money is whole rupees. Fee is added to every order; commission is the
+    # default per-dhaba cut (dhabas.commission_pct overrides it per dhaba).
+    # Comma-separated origins allowed to call the API from a browser. The bundled
+    # frontend is same-origin; set this when hosting a frontend elsewhere.
+    cors_origins: str = "*"
+
+    convenience_fee_inr: int = 7
+    default_commission_pct: int = 12
 
 
 settings = Settings()

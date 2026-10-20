@@ -11,3 +11,6 @@ test.db
 *.db
 .DS_Store
 *.log
+
+# Design kit (prototype, original seed export); the app's copies live in data/ and static/dishes/
+dhabago_kit/

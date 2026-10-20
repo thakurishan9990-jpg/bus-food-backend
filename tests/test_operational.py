@@ -62,10 +62,10 @@ def test_order_includes_dhaba_name_and_stop_name(client, db_session):
                 minutes_from_origin=30, halt_duration_minutes=10)
     db_session.add(stop)
     db_session.flush()
-    dhaba = Dhaba(stop_id=stop.id, name="Named Dhaba", avg_prep_time_minutes=10, is_active=True)
+    dhaba = Dhaba(stop_id=stop.id, name="Named Dhaba", avg_prep_time_minutes=10)
     db_session.add(dhaba)
     db_session.flush()
-    menu_item = MenuItem(dhaba_id=dhaba.id, name="Dal", price=100, is_veg=True)
+    menu_item = MenuItem(dhaba_id=dhaba.id, name="Dal", price_inr=100, is_veg=True)
     db_session.add(menu_item)
     trip = Trip(route_id=route.id, operator="Op", bus_number="NAMES-1",
                 departure_time=datetime.now(timezone.utc) + timedelta(minutes=30),
@@ -80,7 +80,7 @@ def test_order_includes_dhaba_name_and_stop_name(client, db_session):
         "/orders",
         json={
             "trip_id": trip.id, "stop_id": stop.id, "dhaba_id": dhaba.id,
-            "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
+            "seat_number": "A-12", "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
         },
         headers=headers,
     )
@@ -98,3 +98,27 @@ def test_default_token_expiry_is_7_days():
     exp = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
     delta = exp - datetime.now(timezone.utc)
     assert timedelta(days=6, hours=23) < delta <= timedelta(days=7)
+
+
+def test_dish_images_are_served_under_static(client):
+    resp = client.get("/static/dishes/butter-chicken.jpg")
+    assert resp.status_code == 200
+    assert resp.headers["content-type"] == "image/jpeg"
+
+    # The frontend mount at "/" still serves index.html.
+    root = client.get("/")
+    assert root.status_code == 200
+    assert "text/html" in root.headers["content-type"]
+
+
+def test_frontend_has_no_demo_login_shortcuts(client):
+    page = client.get("/").text
+    assert "<title>DhabaGo</title>" in page
+    for leftover in ("Demo login", "Fill it in", "dhaba123", "admin123", "password123"):
+        assert leftover not in page
+
+
+def test_config_exposes_the_convenience_fee(client):
+    body = client.get("/config").json()
+    assert body["convenience_fee_inr"] == settings.convenience_fee_inr
+    assert body["cuisines"]["punjabi"] == "North Indian"
