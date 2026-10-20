@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from decimal import Decimal
+from app.config import settings
 
 from app.models.dhaba import Dhaba, MenuItem
 from app.models.route import Route
@@ -21,11 +21,11 @@ def _build_route_stop_dhaba_menu(db_session, stop_name="Stop1", minutes_from_ori
     db_session.add(stop)
     db_session.flush()
 
-    dhaba = Dhaba(stop_id=stop.id, name="Validation Dhaba", avg_prep_time_minutes=prep_time, is_active=True)
+    dhaba = Dhaba(stop_id=stop.id, name="Validation Dhaba", avg_prep_time_minutes=prep_time)
     db_session.add(dhaba)
     db_session.flush()
 
-    menu_item = MenuItem(dhaba_id=dhaba.id, name="Dal", price=100, is_veg=True)
+    menu_item = MenuItem(dhaba_id=dhaba.id, name="Dal", price_inr=100, is_veg=True)
     db_session.add(menu_item)
     db_session.commit()
     return route, stop, dhaba, menu_item
@@ -44,9 +44,9 @@ def _trip(db_session, route, minutes_until_eta_at_stop, status=TripStatus.IN_TRA
     return trip
 
 
-# 1. total_amount is computed server-side, never trusted from the client.
+# 1. totals are computed server-side, never trusted from the client.
 
-def test_client_supplied_total_amount_is_ignored(client, db_session):
+def test_client_supplied_total_is_ignored(client, db_session):
     route, stop, dhaba, menu_item = _build_route_stop_dhaba_menu(db_session)
     trip = _trip(db_session, route, minutes_until_eta_at_stop=60)
     make_user(db_session, "9995000001", UserRole.PASSENGER)
@@ -56,16 +56,18 @@ def test_client_supplied_total_amount_is_ignored(client, db_session):
         "/orders",
         json={
             "trip_id": trip.id, "stop_id": stop.id, "dhaba_id": dhaba.id,
-            "total_amount": "1.00",  # attempted spoof; schema doesn't even accept this field
-            "items": [{"menu_item_id": menu_item.id, "quantity": 2}],
+            "total_inr": 1,  # attempted spoof; schema doesn't even accept this field
+            "seat_number": "A-12", "items": [{"menu_item_id": menu_item.id, "quantity": 2}],
         },
         headers=headers,
     )
     assert resp.status_code == 201
-    assert Decimal(resp.json()["total_amount"]) == Decimal("200.00")
+    body = resp.json()
+    assert body["subtotal_inr"] == 200
+    assert body["total_inr"] == 200 + settings.convenience_fee_inr
 
 
-# 2. unit_price is snapshotted onto OrderItem at creation.
+# 2. unit_price_inr is snapshotted onto OrderItem at creation.
 
 def test_unit_price_is_snapshotted_on_order_item(client, db_session):
     route, stop, dhaba, menu_item = _build_route_stop_dhaba_menu(db_session)
@@ -77,22 +79,22 @@ def test_unit_price_is_snapshotted_on_order_item(client, db_session):
         "/orders",
         json={
             "trip_id": trip.id, "stop_id": stop.id, "dhaba_id": dhaba.id,
-            "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
+            "seat_number": "A-12", "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
         },
         headers=headers,
     )
     assert resp.status_code == 201
-    assert Decimal(resp.json()["items"][0]["unit_price"]) == Decimal("100.00")
+    assert resp.json()["items"][0]["unit_price_inr"] == 100
 
     # Now change the menu price -- the already-placed order must not change.
-    menu_item.price = Decimal("500.00")
+    menu_item.price_inr = 500
     db_session.commit()
 
     order_id = resp.json()["id"]
     get_resp = client.get(f"/passengers/{resp.json()['passenger_id']}/orders", headers=headers)
     order = next(o for o in get_resp.json() if o["id"] == order_id)
-    assert Decimal(order["items"][0]["unit_price"]) == Decimal("100.00")
-    assert Decimal(order["total_amount"]) == Decimal("100.00")
+    assert order["items"][0]["unit_price_inr"] == 100
+    assert order["subtotal_inr"] == 100
 
 
 # 3. the cutoff check uses the trip's CURRENT delay at the moment of ordering.
@@ -117,7 +119,7 @@ def test_cutoff_uses_current_delay_not_zero(client, db_session):
         "/orders",
         json={
             "trip_id": trip.id, "stop_id": stop.id, "dhaba_id": dhaba.id,
-            "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
+            "seat_number": "A-12", "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
         },
         headers=headers,
     )
@@ -143,7 +145,7 @@ def test_dhaba_stop_mismatch_rejected(client, db_session):
         "/orders",
         json={
             "trip_id": trip.id, "stop_id": other_stop.id, "dhaba_id": dhaba.id,  # dhaba is at `stop`, not `other_stop`
-            "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
+            "seat_number": "A-12", "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
         },
         headers=headers,
     )
@@ -162,7 +164,7 @@ def test_order_on_completed_trip_rejected(client, db_session):
         "/orders",
         json={
             "trip_id": trip.id, "stop_id": stop.id, "dhaba_id": dhaba.id,
-            "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
+            "seat_number": "A-12", "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
         },
         headers=headers,
     )
@@ -179,7 +181,7 @@ def test_order_on_cancelled_trip_rejected(client, db_session):
         "/orders",
         json={
             "trip_id": trip.id, "stop_id": stop.id, "dhaba_id": dhaba.id,
-            "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
+            "seat_number": "A-12", "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
         },
         headers=headers,
     )
@@ -198,7 +200,7 @@ def test_order_on_scheduled_trip_still_allowed(client, db_session):
         "/orders",
         json={
             "trip_id": trip.id, "stop_id": stop.id, "dhaba_id": dhaba.id,
-            "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
+            "seat_number": "A-12", "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
         },
         headers=headers,
     )

@@ -5,7 +5,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.routers import admin, auth, dhabas, passengers, trips
+from app.config import settings
+from app.routers import admin, ads, auth, buses, dhabas, kitchen, passengers, search, trips
 
 logger = logging.getLogger(__name__)
 
@@ -14,14 +15,25 @@ logger = logging.getLogger(__name__)
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 app = FastAPI(
-    title="Bus Food Pre-Ordering API",
-    description="Pre-order food from dhabas at upcoming bus stops.",
-    version="0.1.0",
+    title="DhabaGo API",
+    description=(
+        "Pre-order food from dhabas at upcoming bus stops.\n\n"
+        "**Passenger** browsing endpoints are public; placing an order needs a passenger login. "
+        "**Kitchen** endpoints need a dhaba login, **admin** endpoints an admin login. "
+        "Use *Authorize* with the phone number as the username."
+    ),
+    version="0.2.0",
+    openapi_tags=[
+        {"name": "passenger", "description": "Routes, buses, stops, dhabas, menus, search, ads, and ordering."},
+        {"name": "kitchen", "description": "Dhaba staff: their own orders and menu."},
+        {"name": "admin", "description": "Operations and Business dashboards, delays, and catalogue CRUD."},
+        {"name": "auth", "description": "Sign up and log in."},
+    ],
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[origin.strip() for origin in settings.cors_origins.split(",") if origin.strip()],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,6 +41,10 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(passengers.router)
+app.include_router(buses.router)
+app.include_router(search.router)
+app.include_router(ads.router)
+app.include_router(kitchen.router)
 app.include_router(dhabas.router)
 app.include_router(trips.router)
 app.include_router(admin.router)
@@ -49,10 +65,12 @@ print(
 )
 
 # Mounted last: Starlette matches routes in registration order, so every API
-# route above is still checked first. This only serves static/index.html for
-# "/" and other unmatched paths once nothing above has claimed them.
+# route above is still checked first. "/static" serves assets such as
+# /static/dishes/<dish_id>.jpg; "/" serves static/index.html for "/" and other
+# unmatched paths once nothing above has claimed them.
 if STATIC_DIR.is_dir():
-    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="frontend")
 else:
     logger.warning(
         "Static directory %s not found; the frontend will not be served at '/'. "

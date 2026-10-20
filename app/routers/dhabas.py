@@ -11,7 +11,7 @@ from app.services import order_service
 from app.utils.errors import ForbiddenError, NotFoundError
 from app.utils.security import get_current_user
 
-router = APIRouter(tags=["dhabas"])
+router = APIRouter(tags=["kitchen"])
 
 
 def _assert_owns_dhaba(current_user: User, dhaba_id: int) -> None:

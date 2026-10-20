@@ -6,6 +6,10 @@ venv/
 __pycache__/
 *.pyc
 
+# Seed data and the design kit; only needed locally (the seed runs from a dev machine)
+dhabago_kit/
+data/
+
 # Local SQLite databases
 *.db
 

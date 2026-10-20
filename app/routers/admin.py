@@ -7,10 +7,12 @@ from app.models.route import Route
 from app.models.stop import Stop
 from app.models.trip import Trip
 from app.models.user import UserRole
+from app.schemas.dashboard import Business, Operations
 from app.schemas.dhaba import DhabaCreate, DhabaRead, DhabaUpdate, MenuItemCreate, MenuItemRead, MenuItemUpdate
 from app.schemas.route import RouteCreate, RouteRead, RouteUpdate
 from app.schemas.stop import StopCreate, StopRead, StopUpdate
 from app.schemas.trip import TripCreate, TripRead, TripUpdate
+from app.services import dashboard_service
 from app.utils.errors import NotFoundError
 from app.utils.security import require_role
 
@@ -20,6 +22,20 @@ router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(requir
 def _apply_update(obj, payload) -> None:
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(obj, field, value)
+
+
+# ---- Dashboards ----
+
+@router.get("/operations", response_model=Operations)
+def operations(db: Session = Depends(get_db)) -> Operations:
+    """Live KPIs, open orders by route, live trips, and kitchens that can't keep up. Admin only."""
+    return dashboard_service.operations(db)
+
+
+@router.get("/business", response_model=Business)
+def business(db: Session = Depends(get_db)) -> Business:
+    """Today's income by stream (commission, fees, ads, add-ons), and the split of an example order. Admin only."""
+    return dashboard_service.business(db)
 
 
 # ---- Routes ----

@@ -10,7 +10,7 @@ def test_dhaba_staff_can_create_menu_item_for_own_dhaba(client, db_session, seed
 
     resp = client.post(
         f"/dhabas/{dhaba.id}/menu-items",
-        json={"name": "Chai", "price": "20.00", "is_veg": True, "dhaba_id": 0},
+        json={"name": "Chai", "price_inr": 20, "is_veg": True, "dhaba_id": 0},
         headers=headers,
     )
     assert resp.status_code == 201
@@ -21,7 +21,7 @@ def test_dhaba_staff_can_create_menu_item_for_own_dhaba(client, db_session, seed
 
 def test_dhaba_staff_cannot_create_menu_item_for_other_dhaba(client, db_session, seeded_route_and_dhaba):
     _, stop, dhaba = seeded_route_and_dhaba
-    other_dhaba = Dhaba(stop_id=stop.id, name="Other Dhaba", avg_prep_time_minutes=10, is_active=True)
+    other_dhaba = Dhaba(stop_id=stop.id, name="Other Dhaba", avg_prep_time_minutes=10)
     db_session.add(other_dhaba)
     db_session.commit()
 
@@ -30,7 +30,7 @@ def test_dhaba_staff_cannot_create_menu_item_for_other_dhaba(client, db_session,
 
     resp = client.post(
         f"/dhabas/{other_dhaba.id}/menu-items",
-        json={"name": "Chai", "price": "20.00", "is_veg": True, "dhaba_id": 0},
+        json={"name": "Chai", "price_inr": 20, "is_veg": True, "dhaba_id": 0},
         headers=headers,
     )
     assert resp.status_code == 403
@@ -38,7 +38,7 @@ def test_dhaba_staff_cannot_create_menu_item_for_other_dhaba(client, db_session,
 
 def test_path_dhaba_id_overrides_body_dhaba_id(client, db_session, seeded_route_and_dhaba):
     _, stop, dhaba = seeded_route_and_dhaba
-    other_dhaba = Dhaba(stop_id=stop.id, name="Other Dhaba", avg_prep_time_minutes=10, is_active=True)
+    other_dhaba = Dhaba(stop_id=stop.id, name="Other Dhaba", avg_prep_time_minutes=10)
     db_session.add(other_dhaba)
     db_session.commit()
 
@@ -48,7 +48,7 @@ def test_path_dhaba_id_overrides_body_dhaba_id(client, db_session, seeded_route_
     # body claims dhaba_id=other_dhaba.id, but the path (dhaba.id, their own) must win.
     resp = client.post(
         f"/dhabas/{dhaba.id}/menu-items",
-        json={"name": "Chai", "price": "20.00", "is_veg": True, "dhaba_id": other_dhaba.id},
+        json={"name": "Chai", "price_inr": 20, "is_veg": True, "dhaba_id": other_dhaba.id},
         headers=headers,
     )
     assert resp.status_code == 201
@@ -62,7 +62,7 @@ def test_admin_can_create_menu_item_for_any_dhaba(client, db_session, seeded_rou
 
     resp = client.post(
         f"/dhabas/{dhaba.id}/menu-items",
-        json={"name": "Chai", "price": "20.00", "is_veg": True, "dhaba_id": 0},
+        json={"name": "Chai", "price_inr": 20, "is_veg": True, "dhaba_id": 0},
         headers=headers,
     )
     assert resp.status_code == 201
@@ -75,7 +75,7 @@ def test_passenger_cannot_create_menu_item(client, db_session, seeded_route_and_
 
     resp = client.post(
         f"/dhabas/{dhaba.id}/menu-items",
-        json={"name": "Chai", "price": "20.00", "is_veg": True, "dhaba_id": 0},
+        json={"name": "Chai", "price_inr": 20, "is_veg": True, "dhaba_id": 0},
         headers=headers,
     )
     assert resp.status_code == 403
@@ -88,7 +88,7 @@ def test_dhaba_staff_can_mark_own_item_unavailable(client, db_session, seeded_ro
 
     create_resp = client.post(
         f"/dhabas/{dhaba.id}/menu-items",
-        json={"name": "Chai", "price": "20.00", "is_veg": True, "dhaba_id": 0},
+        json={"name": "Chai", "price_inr": 20, "is_veg": True, "dhaba_id": 0},
         headers=headers,
     )
     item_id = create_resp.json()["id"]
@@ -99,14 +99,14 @@ def test_dhaba_staff_can_mark_own_item_unavailable(client, db_session, seeded_ro
     assert resp.status_code == 200
     assert resp.json()["is_available"] is False
 
-    menu_resp = client.get(f"/dhabas/{dhaba.id}/menu", headers=headers)
-    item = next(i for i in menu_resp.json() if i["id"] == item_id)
-    assert item["is_available"] is False
+    # The passenger menu only lists available items.
+    menu_resp = client.get(f"/dhabas/{dhaba.id}/menu")
+    assert item_id not in [i["id"] for i in menu_resp.json()["items"]]
 
 
 def test_dhaba_staff_cannot_update_other_dhabas_item(client, db_session, seeded_route_and_dhaba):
     _, stop, dhaba = seeded_route_and_dhaba
-    other_dhaba = Dhaba(stop_id=stop.id, name="Other Dhaba", avg_prep_time_minutes=10, is_active=True)
+    other_dhaba = Dhaba(stop_id=stop.id, name="Other Dhaba", avg_prep_time_minutes=10)
     db_session.add(other_dhaba)
     db_session.commit()
 
@@ -115,7 +115,7 @@ def test_dhaba_staff_cannot_update_other_dhabas_item(client, db_session, seeded_
     admin_headers = auth_header(client, "9994000008")
     create_resp = client.post(
         f"/dhabas/{dhaba.id}/menu-items",
-        json={"name": "Chai", "price": "20.00", "is_veg": True, "dhaba_id": 0},
+        json={"name": "Chai", "price_inr": 20, "is_veg": True, "dhaba_id": 0},
         headers=admin_headers,
     )
     item_id = create_resp.json()["id"]
@@ -134,7 +134,7 @@ def test_dhaba_staff_can_delete_own_item(client, db_session, seeded_route_and_dh
 
     create_resp = client.post(
         f"/dhabas/{dhaba.id}/menu-items",
-        json={"name": "Chai", "price": "20.00", "is_veg": True, "dhaba_id": 0},
+        json={"name": "Chai", "price_inr": 20, "is_veg": True, "dhaba_id": 0},
         headers=headers,
     )
     item_id = create_resp.json()["id"]

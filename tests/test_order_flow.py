@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
+from app.config import settings
 from app.models.dhaba import Dhaba, MenuItem
 from app.models.route import Route
 from app.models.stop import Stop
@@ -24,11 +25,11 @@ def _build_trip_and_dhaba(db_session, minutes_until_eta: int, prep_time: int = 1
     db_session.add(stop)
     db_session.flush()
 
-    dhaba = Dhaba(stop_id=stop.id, name="Flow Dhaba", avg_prep_time_minutes=prep_time, is_active=True)
+    dhaba = Dhaba(stop_id=stop.id, name="Flow Dhaba", avg_prep_time_minutes=prep_time)
     db_session.add(dhaba)
     db_session.flush()
 
-    menu_item = MenuItem(dhaba_id=dhaba.id, name="Dal", price=100, is_veg=True)
+    menu_item = MenuItem(dhaba_id=dhaba.id, name="Dal", price_inr=100, is_veg=True)
     db_session.add(menu_item)
 
     departure_time = datetime.now(timezone.utc) + timedelta(minutes=minutes_until_eta - stop.minutes_from_origin)
@@ -50,7 +51,7 @@ def test_place_order_succeeds_with_enough_lead_time(client, db_session):
         "/orders",
         json={
             "trip_id": trip.id, "stop_id": stop.id, "dhaba_id": dhaba.id,
-            "items": [{"menu_item_id": menu_item.id, "quantity": 2}],
+            "seat_number": "A-12", "items": [{"menu_item_id": menu_item.id, "quantity": 2}],
         },
         headers=headers,
     )
@@ -58,7 +59,8 @@ def test_place_order_succeeds_with_enough_lead_time(client, db_session):
     assert resp.status_code == 201
     body = resp.json()
     assert body["status"] == "placed"
-    assert float(body["total_amount"]) == 200.0
+    assert body["subtotal_inr"] == 200
+    assert body["total_inr"] == 200 + settings.convenience_fee_inr
 
 
 def test_place_order_rejected_when_past_cutoff(client, db_session):
@@ -70,7 +72,7 @@ def test_place_order_rejected_when_past_cutoff(client, db_session):
         "/orders",
         json={
             "trip_id": trip.id, "stop_id": stop.id, "dhaba_id": dhaba.id,
-            "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
+            "seat_number": "A-12", "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
         },
         headers=headers,
     )
@@ -101,7 +103,7 @@ def test_full_status_flow_and_cancel_rules(client, db_session):
         "/orders",
         json={
             "trip_id": trip.id, "stop_id": stop.id, "dhaba_id": dhaba.id,
-            "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
+            "seat_number": "A-12", "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
         },
         headers=passenger_headers,
     )
@@ -135,7 +137,7 @@ def test_delay_update_recalculates_order_eta(client, db_session):
         "/orders",
         json={
             "trip_id": trip.id, "stop_id": stop.id, "dhaba_id": dhaba.id,
-            "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
+            "seat_number": "A-12", "items": [{"menu_item_id": menu_item.id, "quantity": 1}],
         },
         headers=passenger_headers,
     )
