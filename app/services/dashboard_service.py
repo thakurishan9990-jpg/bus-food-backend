@@ -16,7 +16,7 @@ from app.schemas.dashboard import (
 )
 from app.services.bus_service import IST, todays_run
 from app.services.catalog_service import is_live, listed_routes
-from app.services.eta_service import TERMINAL_ORDER_STATUSES, minutes_until
+from app.services.eta_service import NOT_FOR_KITCHEN_STATUSES, minutes_until
 from app.services.order_service import commission_for
 
 # AdCampaign.spend_inr holds spend over a rolling week (as in the seed), with no
@@ -44,7 +44,7 @@ def operations(db: Session, now: datetime | None = None) -> Operations:
     open_orders = (
         db.query(Order)
         .join(Order.trip)
-        .filter(Order.status.notin_(TERMINAL_ORDER_STATUSES), Trip.route_id.in_([r.id for r in routes]))
+        .filter(Order.status.notin_(NOT_FOR_KITCHEN_STATUSES), Trip.route_id.in_([r.id for r in routes]))
         .all()
     )
     open_by_route = Counter(o.trip.route_id for o in open_orders)
@@ -109,12 +109,12 @@ def example_order() -> ExampleOrderSplit:
 
 
 def business(db: Session, now: datetime | None = None) -> Business:
-    """Today's (IST) income by stream from non-cancelled orders, plus ads."""
+    """Today's (IST) income by stream from confirmed (not cancelled, not unpaid) orders, plus ads."""
     now = now or datetime.now(timezone.utc)
     start = datetime.combine(now.astimezone(IST).date(), time.min, tzinfo=IST).astimezone(timezone.utc)
     todays = db.query(Order).filter(
         Order.created_at >= start, Order.created_at < start + timedelta(days=1),
-        Order.status != OrderStatus.CANCELLED,
+        Order.status.notin_((OrderStatus.CANCELLED, OrderStatus.AWAITING_PAYMENT)),
     )
     commission, fees, count = todays.with_entities(
         func.coalesce(func.sum(Order.commission_inr), 0),

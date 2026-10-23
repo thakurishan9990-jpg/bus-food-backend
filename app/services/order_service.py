@@ -5,24 +5,26 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.models.ad_campaign import AdCampaign, AdPlacement, AdStatus
 from app.models.dhaba import Dhaba, DhabaStatus, MenuItem
-from app.models.order import Order, OrderItem, OrderStatus
+from app.models.order import Order, OrderItem, OrderStatus, PaymentStatus
 from app.models.stop import Stop
 from app.models.trip import Trip, TripStatus
 from app.models.user import User
 from app.schemas.order import OrderCreate
+from app.services import payment_service
 from app.services.bus_service import find_bus, get_or_create_todays_trip
 from app.services.eta_service import compute_eta, minutes_until
 from app.utils.errors import BadRequestError, ConflictError, NotFoundError
 
 # Linear, one-step-at-a-time forward flow. Cancellation is handled separately
-# and is only allowed from the two earliest statuses.
+# and is only allowed before the kitchen starts cooking. 'awaiting_payment' has
+# no forward step: only a verified payment (confirm_payment) moves it on.
 FORWARD_TRANSITIONS: dict[OrderStatus, OrderStatus] = {
     OrderStatus.PLACED: OrderStatus.ACCEPTED,
     OrderStatus.ACCEPTED: OrderStatus.PREPARING,
     OrderStatus.PREPARING: OrderStatus.READY,
     OrderStatus.READY: OrderStatus.PICKED_UP,
 }
-CANCELLABLE_STATUSES = (OrderStatus.PLACED, OrderStatus.ACCEPTED)
+CANCELLABLE_STATUSES = (OrderStatus.AWAITING_PAYMENT, OrderStatus.PLACED, OrderStatus.ACCEPTED)
 NON_ORDERABLE_TRIP_STATUSES = (TripStatus.COMPLETED, TripStatus.CANCELLED)
 
 
@@ -128,13 +130,17 @@ def create_order(db: Session, passenger: User, payload: OrderCreate) -> Order:
 
     subtotal_inr = food_subtotal_inr + addon_subtotal_inr
     convenience_fee_inr = settings.convenience_fee_inr
+    # With payments configured the order is parked until Razorpay confirms, and
+    # the kitchen never sees it. Without keys the app behaves as it always did.
+    paying = settings.payments_enabled
     order = Order(
         passenger_id=passenger.id,
         trip_id=trip.id,
         stop_id=stop.id,
         dhaba_id=dhaba.id,
         seat_number=payload.seat_number,
-        status=OrderStatus.PLACED,
+        status=OrderStatus.AWAITING_PAYMENT if paying else OrderStatus.PLACED,
+        payment_status=PaymentStatus.AWAITING if paying else PaymentStatus.NOT_REQUIRED,
         subtotal_inr=subtotal_inr,
         convenience_fee_inr=convenience_fee_inr,
         # The dhaba's commission is on its own food only; add-ons are DhabaGo's own sales.
@@ -144,6 +150,57 @@ def create_order(db: Session, passenger: User, payload: OrderCreate) -> Order:
         items=order_items,
     )
     db.add(order)
+    db.flush()
+
+    if paying:
+        # The passenger owes the full total: food, add-ons and the convenience fee.
+        try:
+            order.razorpay_order_id = payment_service.create_payment_order(
+                order.id,
+                order.total_inr,
+                notes={"dhaba": dhaba.name, "stop": stop.name, "seat": payload.seat_number},
+            )
+        except BadRequestError:
+            db.rollback()  # no Razorpay order -> no order of ours either
+            raise
+
+    db.commit()
+    db.refresh(order)
+    return order
+
+
+def confirm_payment(db: Session, order: Order, payment_id: str, signature: str) -> Order:
+    """Verify Razorpay's signature and release the order to the kitchen.
+
+    Re-checks the cut-off, because minutes passed while the passenger was on the
+    checkout screen and the bus kept moving. If it no longer fits, the payment is
+    refunded and the order cancelled rather than handing the kitchen something it
+    cannot cook in time.
+    """
+    if order.status != OrderStatus.AWAITING_PAYMENT:
+        raise ConflictError(f"Order {order.id} is not awaiting payment")
+    if not order.razorpay_order_id:
+        raise BadRequestError("This order has no payment attached")
+    if not payment_service.verify_signature(order.razorpay_order_id, payment_id, signature):
+        raise BadRequestError("Payment signature did not verify")
+
+    order.razorpay_payment_id = payment_id
+
+    try:
+        order.expected_arrival_time = validate_cutoff(order.trip, order.stop, order.dhaba)
+    except ConflictError:
+        payment_service.refund(payment_id)
+        order.status = OrderStatus.CANCELLED
+        order.payment_status = PaymentStatus.REFUNDED
+        db.commit()
+        db.refresh(order)
+        raise ConflictError(
+            "The bus got too close while you were paying — the order was cancelled "
+            "and the payment refunded"
+        ) from None
+
+    order.status = OrderStatus.PLACED
+    order.payment_status = PaymentStatus.PAID
     db.commit()
     db.refresh(order)
     return order
@@ -161,7 +218,7 @@ def advance_status(order: Order, requested_status: OrderStatus) -> Order:
 
 
 def cancel_order(order: Order) -> Order:
-    """Cancel an order. Only allowed while it's still 'placed' or 'accepted'."""
+    """Cancel an order. Only allowed while it's still awaiting payment, 'placed' or 'accepted'."""
     if order.status not in CANCELLABLE_STATUSES:
         raise ConflictError(f"Cannot cancel an order that is already '{order.status.value}'")
     order.status = OrderStatus.CANCELLED

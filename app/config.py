@@ -45,5 +45,17 @@ class Settings(BaseSettings):
     convenience_fee_inr: int = 7
     default_commission_pct: int = 12
 
+    # Razorpay. Test-mode keys look like "rzp_test_...". The key id is public and
+    # is handed to the browser; the secret never leaves the server. Set both as
+    # environment variables, never in a committed file.
+    razorpay_key_id: str = ""
+    razorpay_key_secret: str = ""
+
+    @property
+    def payments_enabled(self) -> bool:
+        """Payments are on only when both keys are configured. Without them the app
+        behaves exactly as it did before: orders go straight to the kitchen."""
+        return bool(self.razorpay_key_id and self.razorpay_key_secret)
+
 
 settings = Settings()

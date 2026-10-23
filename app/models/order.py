@@ -9,12 +9,20 @@ from app.database import Base
 
 
 class OrderStatus(str, enum.Enum):
+    AWAITING_PAYMENT = "awaiting_payment"
     PLACED = "placed"
     ACCEPTED = "accepted"
     PREPARING = "preparing"
     READY = "ready"
     PICKED_UP = "picked_up"
     CANCELLED = "cancelled"
+
+
+class PaymentStatus(str, enum.Enum):
+    NOT_REQUIRED = "not_required"
+    AWAITING = "awaiting"
+    PAID = "paid"
+    REFUNDED = "refunded"
 
 
 class Order(Base):
@@ -36,6 +44,13 @@ class Order(Base):
     commission_inr: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     total_inr: Mapped[int] = mapped_column(Integer)
     expected_arrival_time: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    payment_status: Mapped[PaymentStatus] = mapped_column(
+        Enum(PaymentStatus, name="payment_status", values_callable=lambda x: [e.value for e in x]),
+        default=PaymentStatus.NOT_REQUIRED,
+        server_default=PaymentStatus.NOT_REQUIRED.value,
+    )
+    razorpay_order_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    razorpay_payment_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     passenger: Mapped["User"] = relationship(back_populates="orders")

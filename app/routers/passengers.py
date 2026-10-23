@@ -5,24 +5,24 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
 from app.models.dhaba import Dhaba
-from app.models.order import Order
+from app.models.order import Order, OrderStatus
 from app.models.route import Route
 from app.models.stop import Stop
 from app.models.trip import Trip, TripStatus
 from app.models.user import User, UserRole
 from app.config import settings
 from app.schemas.catalog import AppConfig, DhabaListing, DhabaMenu, MenuCounts, MenuItemListing, RouteSummary
-from app.schemas.order import OrderCreate, OrderRead
+from app.schemas.order import OrderCreate, OrderPlaced, OrderRead, PaymentCheckout, PaymentVerify
 from app.schemas.stop import StopRead, UpcomingStop
 from app.schemas.trip import TripRead
 from app.schemas.user import UserRead
-from app.services import order_service, places_service
+from app.services import order_service, payment_service, places_service
 from app.services.catalog_service import (
     CUISINE_LABELS, Diet, dhabas_with_menus, is_live, listed_routes, shown_for_diet, sponsored_first, visible_items,
 )
 from app.services.eta_service import compute_eta, minutes_until
 from app.services.listing_service import ad_item, addon_for, dhaba_listing, route_summary
-from app.utils.errors import ForbiddenError, NotFoundError
+from app.utils.errors import BadRequestError, ForbiddenError, NotFoundError
 from app.utils.security import get_current_user, require_role
 
 router = APIRouter(tags=["passenger"])
@@ -173,19 +173,77 @@ def get_dhaba_menu(dhaba_ref: str, diet: Diet = DietQuery, db: Session = Depends
     )
 
 
-@router.post("/orders", response_model=OrderRead, status_code=201)
+@router.post("/orders", response_model=OrderPlaced, status_code=201)
 def place_order(
     payload: OrderCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.PASSENGER)),
-) -> Order:
+) -> OrderPlaced:
     """Place an order (passengers only). Seat number required; one dhaba per order.
 
     Give the bus by `bus_number` (or a `trip_id`). Totals are computed here from
     menu and add-on prices; any prices the client sends are ignored. Refused with
     409 once the stop's order cut-off has passed.
+
+    With payments configured the order is held as 'awaiting_payment' and the
+    response carries what the browser needs to open Razorpay Checkout.
     """
-    return order_service.create_order(db, current_user, payload)
+    order = order_service.create_order(db, current_user, payload)
+    body = OrderPlaced.model_validate(order)
+    if order.razorpay_order_id:
+        body.payment = _checkout_for(order)
+    return body
+
+
+def _checkout_for(order: Order) -> PaymentCheckout:
+    return PaymentCheckout(
+        key_id=settings.razorpay_key_id,
+        razorpay_order_id=order.razorpay_order_id,
+        amount_paise=payment_service.to_paise(order.total_inr),
+    )
+
+
+@router.get("/orders/{order_id}/payment", response_model=PaymentCheckout)
+def get_payment_handle(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> PaymentCheckout:
+    """Re-open checkout for an order still awaiting payment.
+
+    Needed because a passenger can close the Razorpay window; without this the
+    order would be stranded with no way to pay for it.
+    """
+    order = db.get(Order, order_id)
+    if order is None:
+        raise NotFoundError(f"Order {order_id} not found")
+    if current_user.role != UserRole.ADMIN and order.passenger_id != current_user.id:
+        raise ForbiddenError("You may only pay for your own orders")
+    if order.status != OrderStatus.AWAITING_PAYMENT or not order.razorpay_order_id:
+        raise BadRequestError("This order is not awaiting payment")
+    return _checkout_for(order)
+
+
+@router.post("/orders/{order_id}/payment/verify", response_model=OrderRead)
+def verify_payment(
+    order_id: int,
+    payload: PaymentVerify,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Order:
+    """Confirm a Razorpay payment and release the order to the kitchen.
+
+    The signature is checked server-side: a browser claiming success proves
+    nothing on its own.
+    """
+    order = db.get(Order, order_id)
+    if order is None:
+        raise NotFoundError(f"Order {order_id} not found")
+    if current_user.role != UserRole.ADMIN and order.passenger_id != current_user.id:
+        raise ForbiddenError("You may only pay for your own orders")
+    return order_service.confirm_payment(
+        db, order, payload.razorpay_payment_id, payload.razorpay_signature
+    )
 
 
 @router.get("/passengers/{passenger_id}/orders", response_model=list[OrderRead])
@@ -202,7 +260,7 @@ def get_passenger_orders(
 def cancel_order(
     order_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
 ) -> Order:
-    """Cancel an order. Only the owning passenger (or admin) may cancel, and only while placed/accepted."""
+    """Cancel an order. Only the owning passenger (or admin) may cancel, and only while unpaid, placed or accepted."""
     order = db.get(Order, order_id)
     if order is None:
         raise NotFoundError(f"Order {order_id} not found")

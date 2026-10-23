@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.dhaba import Dhaba, MenuItem
-from app.models.order import Order
+from app.models.order import Order, OrderStatus
 from app.models.user import User, UserRole
 from app.schemas.dhaba import MenuItemCreate, MenuItemRead, MenuItemUpdate
 from app.schemas.order import OrderRead, OrderStatusUpdate
@@ -27,7 +27,13 @@ def incoming_orders(
     if db.get(Dhaba, dhaba_id) is None:
         raise NotFoundError(f"Dhaba {dhaba_id} not found")
     _assert_owns_dhaba(current_user, dhaba_id)
-    return db.query(Order).filter(Order.dhaba_id == dhaba_id).all()
+    # Orders still awaiting payment are not the kitchen's problem — it should
+    # never start cooking food nobody has paid for.
+    return (
+        db.query(Order)
+        .filter(Order.dhaba_id == dhaba_id, Order.status != OrderStatus.AWAITING_PAYMENT)
+        .all()
+    )
 
 
 @router.patch("/orders/{order_id}/status", response_model=OrderRead)

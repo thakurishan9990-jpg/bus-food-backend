@@ -7,6 +7,9 @@ from app.models.stop import Stop
 from app.models.trip import Trip
 
 TERMINAL_ORDER_STATUSES = (OrderStatus.PICKED_UP, OrderStatus.CANCELLED)
+# Statuses the kitchen and the business numbers never see: unpaid orders aren't
+# real yet, and the kitchen must not start cooking food nobody has paid for.
+NOT_FOR_KITCHEN_STATUSES = (*TERMINAL_ORDER_STATUSES, OrderStatus.AWAITING_PAYMENT)
 
 
 def as_aware_utc(dt: datetime) -> datetime:
