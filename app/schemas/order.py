@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.models.order import OrderStatus
+from app.models.order import OrderStatus, PaymentStatus
 from app.schemas.catalog import IstTimesModel
 
 
@@ -65,6 +65,7 @@ class OrderRead(IstTimesModel):
     dhaba_name: str
     seat_number: str | None
     status: OrderStatus
+    payment_status: PaymentStatus
     subtotal_inr: int
     convenience_fee_inr: int
     commission_inr: int
@@ -77,6 +78,30 @@ class OrderRead(IstTimesModel):
 
 class OrderStatusUpdate(BaseModel):
     status: OrderStatus
+
+
+class PaymentCheckout(BaseModel):
+    """Everything the browser needs to open Razorpay Checkout. The key id is
+    public; the secret stays on the server."""
+
+    key_id: str
+    razorpay_order_id: str
+    amount_paise: int
+    currency: str = "INR"
+
+
+class OrderPlaced(OrderRead):
+    """An order plus, when payments are on, the checkout handle for it."""
+
+    payment: PaymentCheckout | None = None
+
+
+class PaymentVerify(BaseModel):
+    """The two values Razorpay Checkout hands back on success that the server
+    needs; the Razorpay order id is already stored on our order."""
+
+    razorpay_payment_id: str
+    razorpay_signature: str
 
 
 class KitchenOrderRead(OrderRead):

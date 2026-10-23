@@ -6,7 +6,7 @@ from app.models.order import Order, OrderStatus
 from app.models.user import User, UserRole
 from app.schemas.order import KitchenOrderRead, KitchenStatusUpdate
 from app.services import order_service
-from app.services.eta_service import TERMINAL_ORDER_STATUSES
+from app.services.eta_service import NOT_FOR_KITCHEN_STATUSES
 from app.utils.errors import ForbiddenError, NotFoundError
 from app.utils.security import require_role
 
@@ -24,7 +24,7 @@ def kitchen_orders(dhaba_id: int = Depends(_own_dhaba_id), db: Session = Depends
     """Open orders for the caller's own dhaba, soonest bus arrival first. Dhaba role only."""
     return (
         db.query(Order)
-        .filter(Order.dhaba_id == dhaba_id, Order.status.notin_(TERMINAL_ORDER_STATUSES))
+        .filter(Order.dhaba_id == dhaba_id, Order.status.notin_(NOT_FOR_KITCHEN_STATUSES))
         .order_by(Order.expected_arrival_time, Order.id)
         .all()
     )
@@ -43,7 +43,8 @@ def update_kitchen_order(
     only, and only for the caller's own dhaba (403 otherwise).
     """
     order = db.get(Order, order_id)
-    if order is None:
+    # An unpaid order is invisible to the kitchen, so it can't act on one either.
+    if order is None or order.status == OrderStatus.AWAITING_PAYMENT:
         raise NotFoundError(f"Order {order_id} not found")
     if order.dhaba_id != dhaba_id:
         raise ForbiddenError("You may only manage your own dhaba's orders")

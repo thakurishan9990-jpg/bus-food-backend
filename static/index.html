@@ -472,6 +472,7 @@ body:not([data-role="passenger"]) .diet{display:none}
 .loading{padding:28px;text-align:center;color:var(--muted)}
 .fine{font-size:13px;color:var(--muted);margin-top:10px}
 </style>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
 <div class="boot" aria-hidden="true"><div class="mk"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16M8 21v-4M16 21v-4M8 14h.01M16 14h.01"/></svg>DhabaGo</div></div>
@@ -570,6 +571,7 @@ body:not([data-role="passenger"]) .diet{display:none}
     <div style="display:flex;flex-direction:column;gap:14px">
       <div class="sec-label" style="margin:0">While you wait</div>
       <div id="oad"></div>
+      <button class="btn full" id="pay" hidden>Pay now</button>
       <div class="grid" style="gap:10px"><button class="btn ghost" id="refresh">Refresh status</button><button class="btn ghost" id="cancel">Cancel order</button></div>
     </div>
   </div>
@@ -996,12 +998,40 @@ function placeOrder(){
     items:Object.keys(S.cart).map(function(k){var l=S.lines[k];return l.addon_campaign_id?{addon_campaign_id:l.addon_campaign_id,quantity:S.cart[k]}:{menu_item_id:l.menu_item_id,quantity:S.cart[k]}})}})
   .then(function(o){
     S.order=o;store.set('dg-order',String(o.id));
-    $('#done-lead').textContent='#ORD-'+o.id+' · '+o.dhaba_name;
-    $('#done-sum').innerHTML='<div class="sumrow"><span>Ready by</span><span>'+tm(o.ready_by)+'</span></div><div class="sumrow"><span>Bus arrives</span><span>'+tm(o.expected_arrival_time)+'</span></div><div class="sumrow"><span>Bus · seat</span><span>'+esc(o.bus_number)+' · '+esc(o.seat_number)+'</span></div><div class="sumrow"><span>Convenience fee</span><span>'+rs(o.convenience_fee_inr)+'</span></div><div class="sumrow tot"><span>Total</span><span>'+rs(o.total_inr)+'</span></div>';
-    S.cart={};S.lines={};S.cartDhaba=null;syncCart();openV('veil-done');
+    S.cart={};S.lines={};S.cartDhaba=null;syncCart();
+    // With payments on, the order waits for Razorpay; the kitchen sees it only once paid.
+    if(o.payment)openCheckout(o);else showDone(o);
   }).catch(fail).then(function(){btn.disabled=false});
 }
+function showDone(o){
+    $('#done-lead').textContent='#ORD-'+o.id+' · '+o.dhaba_name;
+    $('#done-sum').innerHTML='<div class="sumrow"><span>Ready by</span><span>'+tm(o.ready_by)+'</span></div><div class="sumrow"><span>Bus arrives</span><span>'+tm(o.expected_arrival_time)+'</span></div><div class="sumrow"><span>Bus · seat</span><span>'+esc(o.bus_number)+' · '+esc(o.seat_number)+'</span></div><div class="sumrow"><span>Convenience fee</span><span>'+rs(o.convenience_fee_inr)+'</span></div><div class="sumrow tot"><span>Total</span><span>'+rs(o.total_inr)+'</span></div>';
+    openV('veil-done');
+}
 $('#place').addEventListener('click',placeOrder);
+
+/* ---------- payment ---------- */
+function openCheckout(o){
+  if(typeof Razorpay==='undefined'){toast('Payment window could not load. Check your connection and tap Pay now.');show('order');return}
+  var rz=new Razorpay({
+    key:o.payment.key_id,order_id:o.payment.razorpay_order_id,amount:o.payment.amount_paise,currency:o.payment.currency,
+    name:'DhabaGo',description:'#ORD-'+o.id+' · '+o.dhaba_name+' · seat '+o.seat_number,theme:{color:'#1E95DB'},
+    prefill:{contact:S.user?S.user.phone:'',name:S.user?S.user.name:''},
+    modal:{ondismiss:function(){toast('Payment cancelled. Order #ORD-'+o.id+' is not confirmed yet.');show('order')}},
+    handler:function(r){
+      api('/orders/'+o.id+'/payment/verify',{method:'POST',json:{razorpay_payment_id:r.razorpay_payment_id,razorpay_signature:r.razorpay_signature}})
+      .then(function(paid){S.order=paid;showDone(paid)})
+      .catch(function(e){toast(e.status===409?e.message:'Payment could not be confirmed: '+(e.message||'try again'));show('order')});
+    }
+  });
+  rz.on('payment.failed',function(){toast('Payment failed. Order #ORD-'+o.id+' is still unpaid.')});
+  rz.open();
+}
+$('#pay').addEventListener('click',function(){
+  if(!S.order)return;
+  var b=this,o=S.order;b.disabled=true;
+  api('/orders/'+o.id+'/payment').then(function(h){o.payment=h;openCheckout(o)}).catch(fail).then(function(){b.disabled=false});
+});
 $('#track').addEventListener('click',function(){closeV();show('order')});
 var STEPS=[['placed','Order placed'],['accepted','Accepted by kitchen'],['preparing','Being prepared'],['ready','Ready for pickup'],['picked_up','Picked up']];
 function loadMyOrders(){
@@ -1011,7 +1041,7 @@ function loadMyOrders(){
 var orderT=null;
 function renderOrder(){
   clearInterval(orderT);
-  if(!S.user){$('#oband').innerHTML='<h3>No order yet</h3><div class="meta">Sign in at checkout to place an order and track it here.</div>';$('#otl').innerHTML='';$('#oad').innerHTML='';$('#cancel').hidden=true;return}
+  if(!S.user){$('#oband').innerHTML='<h3>No order yet</h3><div class="meta">Sign in at checkout to place an order and track it here.</div>';$('#otl').innerHTML='';$('#oad').innerHTML='';$('#cancel').hidden=true;$('#pay').hidden=true;return}
   loadMyOrders().then(function(list){
     var want=S.order?S.order.id:+store.get('dg-order');
     S.order=list.filter(function(o){return o.id===want})[0]||list.filter(function(o){return o.status!=='picked_up'&&o.status!=='cancelled'})[0]||list[0]||null;
@@ -1021,14 +1051,16 @@ function renderOrder(){
 }
 function paintOrder(quiet){
   var o=S.order;
-  if(!o){$('#oband').innerHTML='<h3>No order yet</h3><div class="meta">Pick a dhaba at a stop ahead to place one.</div>';$('#otl').innerHTML='';$('#oad').innerHTML='';$('#cancel').hidden=true;return}
-  var cancelled=o.status==='cancelled';
+  if(!o){$('#oband').innerHTML='<h3>No order yet</h3><div class="meta">Pick a dhaba at a stop ahead to place one.</div>';$('#otl').innerHTML='';$('#oad').innerHTML='';$('#cancel').hidden=true;$('#pay').hidden=true;return}
+  var cancelled=o.status==='cancelled',unpaid=o.status==='awaiting_payment';
   $('#oband').innerHTML='<h3>Order #ORD-'+o.id+(cancelled?' · cancelled':'')+'</h3><div class="meta">'+esc(o.dhaba_name)+' · '+esc(o.stop_name)+' · '+rs(o.total_inr)+' · seat '+esc(o.seat_number)+' · bus '+esc(o.bus_number)+'</div><div class="oitems">'+o.items.map(function(it){return '<span>'+(it.image_url?img(it.image_url,''):'')+esc(it.name)+' × '+it.quantity+'</span>'}).join('')+'</div>';
   var cur=STEPS.map(function(s){return s[0]}).indexOf(o.status);
   var times=[tm(o.created_at),'','','expected '+tm(o.ready_by),'bus arrives '+tm(o.expected_arrival_time)];
-  $('#otl').innerHTML=cancelled?'<div class="tlrow active"><div class="tldot">×</div><div class="tl-label">Order cancelled</div><div class="tl-time">'+tm(o.created_at)+'</div></div>':
+  $('#otl').innerHTML=unpaid?'<div class="tlrow active"><div class="tldot">₹</div><div class="tl-label">Not confirmed yet. Pay to send this to the kitchen.</div><div class="tl-time">'+tm(o.created_at)+'</div></div>':
+    cancelled?'<div class="tlrow active"><div class="tldot">×</div><div class="tl-label">Order cancelled</div><div class="tl-time">'+tm(o.created_at)+'</div></div>':
     STEPS.map(function(s,i){var cls=i<cur||o.status==='picked_up'?'done':i===cur?'active':'';return '<div class="tlrow '+cls+'"><div class="tldot">'+(cls==='done'?'✓':cls==='active'?'●':i)+'</div><div class="tl-label">'+esc(i===4?'Picked up at '+o.stop_name:s[1])+'</div><div class="tl-time">'+times[i]+'</div></div>'}).join('');
-  $('#cancel').hidden=!(o.status==='placed'||o.status==='accepted');
+  $('#cancel').hidden=!(unpaid||o.status==='placed'||o.status==='accepted');
+  $('#pay').hidden=!unpaid;
   if(!quiet)waitAd(o);
 }
 function waitAd(o){
@@ -1073,7 +1105,7 @@ $('#scope').addEventListener('click',function(e){var c=e.target.closest('[data-s
 $('#filters').addEventListener('click',function(e){var c=e.target.closest('[data-f]');if(!c)return;S.filters[c.dataset.f]=!S.filters[c.dataset.f];c.classList.toggle('on');renderSearch()});
 
 /* ---------- alerts + profile ---------- */
-var STATUS_NOTE={placed:['1','Order placed','is waiting for the kitchen to accept it.'],accepted:['✓','Order confirmed','was accepted.'],preparing:['1','Kitchen started your order','is being prepared.'],ready:['✓','Food is ready','is ready for pickup.'],picked_up:['★','Order picked up','was picked up. Enjoy your meal.'],cancelled:['!','Order cancelled','was cancelled.']};
+var STATUS_NOTE={awaiting_payment:['₹','Payment pending','is not confirmed yet. Pay to send it to the kitchen.'],placed:['1','Order placed','is waiting for the kitchen to accept it.'],accepted:['✓','Order confirmed','was accepted.'],preparing:['1','Kitchen started your order','is being prepared.'],ready:['✓','Food is ready','is ready for pickup.'],picked_up:['★','Order picked up','was picked up. Enjoy your meal.'],cancelled:['!','Order cancelled','was cancelled.']};
 function renderNotify(){
   var notes=[];
   if(S.bus&&S.bus.delay_minutes)notes.push('<div class="note rv in"><div class="ic amber">!</div><div><div class="tm">Today</div><div class="ti">Bus '+esc(S.bus.bus_number)+' running '+S.bus.delay_minutes+' min late</div><div class="bd">Stop arrivals and order cut-offs have moved to match.</div></div></div>');
