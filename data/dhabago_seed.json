@@ -17965,6 +17965,34 @@
    "password": "dhaba123",
    "role": "dhaba",
    "dhaba_slug": "ddn-punjabi-rasoi"
+  },
+  {
+   "name": "Hari Om staff",
+   "phone": "9876500002",
+   "password": "dhaba123",
+   "role": "dhaba",
+   "dhaba_slug": "ddn-hari-om-highway-plaza"
+  },
+  {
+   "name": "Gur Mandi staff",
+   "phone": "9876500003",
+   "password": "dhaba123",
+   "role": "dhaba",
+   "dhaba_slug": "ddn-gur-mandi-dhaba"
+  },
+  {
+   "name": "Chai Corner staff",
+   "phone": "9876500004",
+   "password": "dhaba123",
+   "role": "dhaba",
+   "dhaba_slug": "ddn-highway-chai-corner"
+  },
+  {
+   "name": "Shivalik staff",
+   "phone": "9876500005",
+   "password": "dhaba123",
+   "role": "dhaba",
+   "dhaba_slug": "ddn-shivalik-dhaba"
   }
  ]
 }

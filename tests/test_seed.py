@@ -51,7 +51,7 @@ def test_seed_loads_the_checkpoint_counts(db_session):
     assert table_counts["Stop"] == 39
     assert table_counts["Dhaba"] == 284
     assert table_counts["MenuItem"] == 2245
-    assert table_counts["User"] == 3
+    assert table_counts["User"] == 7  # passenger, 5 dhaba staff, admin
 
 
 def test_seed_twice_does_not_duplicate(db_session):
@@ -175,8 +175,28 @@ def test_passenger_and_dhaba_users_use_seed_file_passwords(db_session):
     assert user.dhaba.slug == "ddn-punjabi-rasoi"
 
 
+def test_every_dl234_stop_has_a_kitchen_account(db_session):
+    """A demo can order at any DL-234 stop and watch it reach that dhaba's kitchen."""
+    seed(db_session)
+    expected = {
+        "9876500001": ("ddn-punjabi-rasoi", "Meerut"),
+        "9876500002": ("ddn-hari-om-highway-plaza", "Khatauli"),
+        "9876500003": ("ddn-gur-mandi-dhaba", "Muzaffarnagar"),
+        "9876500004": ("ddn-highway-chai-corner", "Roorkee"),
+        "9876500005": ("ddn-shivalik-dhaba", "Chhutmalpur"),
+    }
+    for phone, (slug, stop_name) in expected.items():
+        user = _user(db_session, phone)
+        assert user.role == UserRole.DHABA
+        assert verify_password("dhaba123", user.hashed_password)
+        assert (user.dhaba.slug, user.dhaba.stop.name, user.dhaba.stop.route.code) == (slug, stop_name, "DL-234")
+
+    dl234 = db_session.query(Route).filter(Route.code == "DL-234").one()
+    assert {s.name for s in dl234.stops} == {stop for _, stop in expected.values()}
+
+
 def test_committed_seed_file_has_no_admin():
-    assert [u["role"] for u in SEED_DATA["demo_users"]] == ["passenger", "dhaba"]
+    assert [u["role"] for u in SEED_DATA["demo_users"]] == ["passenger"] + ["dhaba"] * 5
     assert settings.admin_phone not in json.dumps(SEED_DATA)
 
 
@@ -240,7 +260,7 @@ def test_older_accounts_are_kept_and_old_admin_loses_demo_password(db_session):
 
     seed(db_session)
 
-    assert db_session.query(User).count() == 6
+    assert db_session.query(User).count() == 10
     assert verify_password("password123", _user(db_session, "9876543211").hashed_password)
     assert not verify_password("password123", _user(db_session, "9876543212").hashed_password)
     assert verify_password("own-strong-pw", _user(db_session, "9876543213").hashed_password)
